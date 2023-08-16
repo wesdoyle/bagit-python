@@ -34,15 +34,11 @@ def _parse_tags(tag_file):
        See http://www.faqs.org/rfcs/rfc2822.html for
        more information.
     """
-
     tag_name = None
     tag_value = None
 
-    # Line folding is handled by yielding values only after we encounter
-    # the start of a new tag, or if we pass the EOF.
     for num, line in enumerate(tag_file):
-        # Skip over any empty or blank lines.
-        if len(line) == 0 or line.isspace():
+        if not line.strip():
             continue
         elif line[0].isspace() and tag_value is not None:  # folded line
             tag_value += line
@@ -50,19 +46,12 @@ def _parse_tags(tag_file):
             # Starting a new tag; yield the last one.
             if tag_name:
                 yield tag_name, tag_value.strip()
-
             if ":" not in line:
                 raise BagValidationError(
                     _("%(filename)s contains invalid tag: %(line)s")
-                    % {
-                        "line": line.strip(),
-                        "filename": os.path.basename(tag_file.name),
-                    }
+                    % {"line": line.strip(), "filename": os.path.basename(tag_file.name)}
                 )
-
-            parts = line.strip().split(":", 1)
-            tag_name = parts[0].strip()
-            tag_value = parts[1]
+            tag_name, tag_value = line.strip().split(":", 1)
 
     # Passed the EOF.  All done after this.
     if tag_name:
