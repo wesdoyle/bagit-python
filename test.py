@@ -22,6 +22,7 @@ import bagit
 import bagit_modules.bag
 import bagit_modules.bagging
 import bagit_modules.errors
+import bagit_modules.io
 import bagit_modules.manifests
 import bagit_modules.string_ops
 
@@ -35,7 +36,7 @@ logging.raiseExceptions = True
 
 
 def slurp_text_file(filename):
-    with bagit.open_text_file(filename) as f:
+    with bagit_modules.io.open_text_file(filename) as f:
         return f.read()
 
 

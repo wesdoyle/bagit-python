@@ -1,16 +1,16 @@
 import os
-import tempfile
 import warnings
 from datetime import date
 
-from bagit import _, open_text_file, VERSION
-from bagit_modules.constants import PROJECT_URL, DEFAULT_CHECKSUMS
-from bagit_modules.tagging import make_tag_file
-from bagit_modules.manifests import make_manifests, make_tagmanifest_file
-from bagit_modules.io import can_bag, can_read
-from bagit_modules.logging import LOGGER
+from bagit import VERSION
+from bagit_modules.translation_catalog import _
 from bagit_modules.bag import Bag
+from bagit_modules.constants import PROJECT_URL, DEFAULT_CHECKSUMS
 from bagit_modules.errors import BagError
+from bagit_modules.io import open_text_file
+from bagit_modules.logging import LOGGER
+from bagit_modules.manifests import make_manifests, make_tagmanifest_file
+from bagit_modules.tagging import make_tag_file
 
 
 def make_bag(

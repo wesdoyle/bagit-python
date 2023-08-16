@@ -1,6 +1,7 @@
 import os
 
-from bagit import _, open_text_file
+from bagit_modules.translation_catalog import _
+from bagit_modules.io import open_text_file
 from bagit_modules.errors import BagValidationError
 from bagit_modules.string_ops import force_unicode
 

@@ -5,15 +5,15 @@ import warnings
 from os.path import abspath, isfile, isdir
 from urllib.parse import urlparse
 
-from bagit import _, CHECKSUM_ALGOS, open_text_file
+from bagit_modules.translation_catalog import _
 from bagit_modules.constants import UNICODE_BYTE_ORDER_MARK
 from bagit_modules.concurrency import posix_multiprocessing_worker_initializer
 from bagit_modules.string_ops import force_unicode, normalize_unicode
-from bagit_modules.hashing import calc_hashes
+from bagit_modules.hashing import calc_hashes, CHECKSUM_ALGOS
 from bagit_modules.tagging import make_tag_file, load_tag_file
 from bagit_modules.filenames import decode_filename
 from bagit_modules.manifests import make_manifests, make_tagmanifest_file
-from bagit_modules.io import can_bag, can_read
+from bagit_modules.io import can_bag, can_read, open_text_file
 from bagit_modules.logging import LOGGER
 from bagit_modules.errors import BagError, BagValidationError, ChecksumMismatch, FileMissing, UnexpectedFile
 

@@ -1,5 +1,7 @@
+import codecs
 import os
 import sys
+from functools import partial
 
 
 def walk(data_dir):
@@ -68,3 +70,8 @@ def find_locale_dir():
         locale_dir = os.path.join(prefix, "locale")
         if os.path.isdir(locale_dir):
             return locale_dir
+
+
+#: Convenience function used everywhere we want to open a file to read text
+#: rather than un-decoded bytes:
+open_text_file = partial(codecs.open, encoding="utf-8", errors="strict")

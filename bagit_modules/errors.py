@@ -1,4 +1,4 @@
-from bagit import _
+from bagit_modules.translation_catalog import _
 from bagit_modules.string_ops import force_unicode
 
 

@@ -1,7 +1,7 @@
 import hashlib
 import os
 
-from bagit import _
+from bagit_modules.translation_catalog import _
 from bagit_modules.constants import HASH_BLOCK_SIZE
 from bagit_modules.string_ops import force_unicode
 from bagit_modules.errors import BagValidationError
@@ -82,3 +82,6 @@ def _calculate_file_hashes(full_path, f_hashers):
         )
 
     return {alg: hasher.hexdigest() for alg, hasher in f_hashers.items()}
+
+
+CHECKSUM_ALGOS = hashlib.algorithms_guaranteed

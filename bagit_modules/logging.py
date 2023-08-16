@@ -1,6 +1,6 @@
 import logging
 
-from bagit import MODULE_NAME
+from bagit_modules.module import MODULE_NAME
 
 LOGGER = logging.getLogger(MODULE_NAME)
 

@@ -1,7 +1,9 @@
 import argparse
 import re
 
-from bagit import VERSION, __doc__, _, CHECKSUM_ALGOS
+from bagit import VERSION, __doc__
+from bagit_modules.translation_catalog import _
+from bagit_modules.hashing import CHECKSUM_ALGOS
 from constants import STANDARD_BAG_INFO_HEADERS
 from bagit_modules.constants import DEFAULT_CHECKSUMS
 

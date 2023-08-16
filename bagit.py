@@ -1,38 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import codecs
-import gettext
-import hashlib
 import sys
-from functools import partial
-
-from pkg_resources import DistributionNotFound, get_distribution
 
 from bagit_modules.bag import Bag
 from bagit_modules.bagging import make_bag
 from bagit_modules.errors import BagError
-from bagit_modules.io import find_locale_dir
 from bagit_modules.logging import LOGGER, configure_logging
 from bagit_modules.parsing import make_parser
+from bagit_modules.translation_catalog import _
+from bagit_modules.versioning import get_version
 
-TRANSLATION_CATALOG = gettext.translation("bagit-python", localedir=find_locale_dir(), fallback=True)
-_ = TRANSLATION_CATALOG.gettext
-MODULE_NAME = "bagit" if __name__ == "__main__" else __name__
-
-try:
-    VERSION = get_distribution(MODULE_NAME).version
-except DistributionNotFound:
-    VERSION = "0.0.dev0"
+get_version()
 
 with open("docstring.txt", "r") as f:
     __doc__ = f.read() % globals()
-
-CHECKSUM_ALGOS = hashlib.algorithms_guaranteed
-
-#: Convenience function used everywhere we want to open a file to read text
-#: rather than un-decoded bytes:
-open_text_file = partial(codecs.open, encoding="utf-8", errors="strict")
 
 
 def main():

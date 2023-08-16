@@ -5,11 +5,11 @@ import multiprocessing
 import os
 import re
 
-from bagit import _, open_text_file
+from bagit_modules.translation_catalog import _
 from bagit_modules.constants import HASH_BLOCK_SIZE, DEFAULT_CHECKSUMS
 from bagit_modules.hashing import get_hashers
 from bagit_modules.filenames import encode_filename, decode_filename
-from bagit_modules.io import walk, find_tag_files
+from bagit_modules.io import walk, find_tag_files, open_text_file
 from bagit_modules.logging import LOGGER
 
 
