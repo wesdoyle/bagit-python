@@ -2,9 +2,10 @@ import os
 import warnings
 from datetime import date
 
+from bagit_modules.docs import PROJECT_URL
 from bagit_modules.translation_catalog import _
 from bagit_modules.bag import Bag
-from bagit_modules.constants import PROJECT_URL, DEFAULT_CHECKSUMS
+from bagit_modules.constants import DEFAULT_CHECKSUMS
 from bagit_modules.errors import BagError
 from bagit_modules.io import open_text_file
 from bagit_modules.logging import LOGGER

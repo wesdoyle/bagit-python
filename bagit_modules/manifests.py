@@ -50,6 +50,10 @@ def make_manifests(data_dir, processes, algorithms=DEFAULT_CHECKSUMS, encoding="
             for digest, filename in values:
                 manifest.write(f"{digest}  {encode_filename(filename)}\n")
 
+    if not byte_value_set or not file_count_set:
+        LOGGER.warning(_("No files processed. Returning (0, 0) for bytes and file counts."))
+        return 0, 0
+
     return byte_value_set.pop(), file_count_set.pop()
 
 
