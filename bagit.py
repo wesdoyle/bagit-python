@@ -15,8 +15,8 @@ from bagit_modules.bag import Bag
 from bagit_modules.bagging import make_bag
 from bagit_modules.errors import BagError
 from bagit_modules.io import find_locale_dir
-from bagit_modules.logging import LOGGER, _configure_logging
-from bagit_modules.parsing import _make_parser
+from bagit_modules.logging import LOGGER, configure_logging
+from bagit_modules.parsing import make_parser
 
 try:
     from urllib.parse import urlparse
@@ -56,18 +56,15 @@ except AttributeError:
 #: rather than un-decoded bytes:
 open_text_file = partial(codecs.open, encoding="utf-8", errors="strict")
 
+
 # This is the same as decoding the byte values in codecs.BOM:
-
-
-# following code is used for command line program
-
 
 def main():
     if "--version" in sys.argv:
         print(_("bagit-python version %s") % VERSION)
         sys.exit(0)
 
-    parser = _make_parser()
+    parser = make_parser()
     args = parser.parse_args()
 
     if args.processes <= 0:
@@ -79,7 +76,7 @@ def main():
     if args.completeness_only and not args.validate:
         parser.error(_("--completeness-only is only allowed as an option for --validate!"))
 
-    _configure_logging(args)
+    configure_logging(args)
 
     rc = 0
     for bag_dir in args.directory:

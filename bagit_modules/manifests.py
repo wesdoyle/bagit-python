@@ -68,7 +68,7 @@ def make_manifests(data_dir, processes, algorithms=DEFAULT_CHECKSUMS, encoding="
     return byte_value_set.pop(), file_count_set.pop()
 
 
-def _make_tagmanifest_file(alg, bag_dir, encoding="utf-8"):
+def make_tagmanifest_file(alg, bag_dir, encoding="utf-8"):
     tagmanifest_file = join(bag_dir, "tagmanifest-%s.txt" % alg)
     LOGGER.info(_("Creating %s"), tagmanifest_file)
 

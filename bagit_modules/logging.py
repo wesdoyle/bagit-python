@@ -7,7 +7,7 @@ from bagit import MODULE_NAME
 LOGGER = logging.getLogger(MODULE_NAME)
 
 
-def _configure_logging(opts):
+def configure_logging(opts):
     log_format = "%(asctime)s - %(levelname)s - %(message)s"
     if opts.quiet:
         level = logging.ERROR

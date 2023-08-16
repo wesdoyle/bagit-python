@@ -7,8 +7,8 @@ from datetime import date
 
 from bagit import _, open_text_file, VERSION
 from bagit_modules.constants import PROJECT_URL, DEFAULT_CHECKSUMS
-from bagit_modules.tagging import _make_tag_file
-from bagit_modules.manifests import make_manifests, _make_tagmanifest_file
+from bagit_modules.tagging import make_tag_file
+from bagit_modules.manifests import make_manifests, make_tagmanifest_file
 from bagit_modules.io import _can_bag, _can_read
 from bagit_modules.logging import LOGGER
 from bagit_modules.bag import Bag
@@ -135,10 +135,10 @@ def make_bag(
                 )
 
             bag_info["Payload-Oxum"] = "%s.%s" % (total_bytes, total_files)
-            _make_tag_file("bag-info.txt", bag_info)
+            make_tag_file("bag-info.txt", bag_info)
 
             for c in checksums:
-                _make_tagmanifest_file(c, bag_dir, encoding="utf-8")
+                make_tagmanifest_file(c, bag_dir, encoding="utf-8")
     except Exception:
         LOGGER.exception(_("An error occurred creating a bag in %s"), bag_dir)
         raise

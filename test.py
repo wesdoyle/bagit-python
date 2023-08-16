@@ -939,7 +939,7 @@ Tag-File-Character-Encoding: UTF-8
                 f.write(normalized_bytes)
 
         for alg in bag.algorithms:
-            bagit_modules.manifests._make_tagmanifest_file(alg, bag.path, encoding=bag.encoding)
+            bagit_modules.manifests.make_tagmanifest_file(alg, bag.path, encoding=bag.encoding)
 
         # Now we'll reload the whole thing:
         bag = bagit_modules.bag.Bag(self.tmpdir)

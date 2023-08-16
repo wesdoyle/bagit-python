@@ -12,9 +12,9 @@ from bagit_modules.constants import UNICODE_BYTE_ORDER_MARK
 from bagit_modules.concurrency import posix_multiprocessing_worker_initializer
 from bagit_modules.string_ops import force_unicode, normalize_unicode
 from bagit_modules.hashing import _calc_hashes
-from bagit_modules.tagging import _make_tag_file, _load_tag_file
+from bagit_modules.tagging import make_tag_file, load_tag_file
 from bagit_modules.filenames import _decode_filename
-from bagit_modules.manifests import make_manifests, _make_tagmanifest_file
+from bagit_modules.manifests import make_manifests, make_tagmanifest_file
 from bagit_modules.io import _can_bag, _can_read
 from bagit_modules.logging import LOGGER
 from bagit_modules.errors import BagError, BagValidationError, ChecksumMismatch, FileMissing, UnexpectedFile
@@ -80,7 +80,7 @@ class Bag(object):
         if not isfile(bagit_file_path):
             raise BagError(_("Expected bagit.txt does not exist: %s") % bagit_file_path)
 
-        self.tags = tags = _load_tag_file(bagit_file_path)
+        self.tags = tags = load_tag_file(bagit_file_path)
 
         required_tags = ("BagIt-Version", "Tag-File-Character-Encoding")
         missing_tags = [i for i in required_tags if i not in tags]
@@ -119,7 +119,7 @@ class Bag(object):
 
         info_file_path = os.path.join(self.path, self.tag_file_name)
         if os.path.exists(info_file_path):
-            self.info = _load_tag_file(info_file_path, encoding=self.encoding)
+            self.info = load_tag_file(info_file_path, encoding=self.encoding)
 
         self._load_manifests()
 
@@ -265,11 +265,11 @@ class Bag(object):
             LOGGER.info(_("Updating Payload-Oxum in %s"), self.tag_file_name)
             self.info["Payload-Oxum"] = "%s.%s" % (total_bytes, total_files)
 
-        _make_tag_file(self.tag_file_name, self.info)
+        make_tag_file(self.tag_file_name, self.info)
 
         # Update tag-manifest for changes to manifest & bag-info files
         for alg in self.algorithms:
-            _make_tagmanifest_file(alg, self.path, encoding=self.encoding)
+            make_tagmanifest_file(alg, self.path, encoding=self.encoding)
 
         # Reload the manifests
         self._load_manifests()

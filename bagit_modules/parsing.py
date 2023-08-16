@@ -20,7 +20,7 @@ class BagHeaderAction(argparse.Action):
         namespace.bag_info[opt_caps] = values
 
 
-def _make_parser():
+def make_parser():
     parser = BagArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="bagit-python version %s\n\n%s\n" % (VERSION, __doc__.strip()),

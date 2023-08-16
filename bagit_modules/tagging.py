@@ -8,6 +8,37 @@ from bagit_modules.string_ops import force_unicode
 from bagit_modules.errors import BagValidationError
 
 
+def make_tag_file(bag_info_path, bag_info):
+    headers = sorted(bag_info.keys())
+    with open_text_file(bag_info_path, "w") as f:
+        for h in headers:
+            values = bag_info[h]
+            if not isinstance(values, list):
+                values = [values]
+            for txt in values:
+                # strip CR, LF and CRLF so they don't mess up the tag file
+                txt = re.sub(r"\n|\r|(\r\n)", "", force_unicode(txt))
+                f.write("%s: %s\n" % (h, txt))
+
+
+def load_tag_file(tag_file_name, encoding="utf-8-sig"):
+    with open_text_file(tag_file_name, "r", encoding=encoding) as tag_file:
+        # Store duplicate tags as list of vals
+        # in order of parsing under the same key.
+        tags = {}
+        for name, value in _parse_tags(tag_file):
+            if name not in tags:
+                tags[name] = value
+                continue
+
+            if not isinstance(tags[name], list):
+                tags[name] = [tags[name], value]
+            else:
+                tags[name].append(value)
+
+        return tags
+
+
 def _parse_tags(tag_file):
     """Parses a tag file, according to RFC 2822.  This
        includes line folding, permitting extra-long
@@ -31,7 +62,7 @@ def _parse_tags(tag_file):
         else:
             # Starting a new tag; yield the last one.
             if tag_name:
-                yield (tag_name, tag_value.strip())
+                yield tag_name, tag_value.strip()
 
             if ":" not in line:
                 raise BagValidationError(
@@ -48,35 +79,4 @@ def _parse_tags(tag_file):
 
     # Passed the EOF.  All done after this.
     if tag_name:
-        yield (tag_name, tag_value.strip())
-
-
-def _make_tag_file(bag_info_path, bag_info):
-    headers = sorted(bag_info.keys())
-    with open_text_file(bag_info_path, "w") as f:
-        for h in headers:
-            values = bag_info[h]
-            if not isinstance(values, list):
-                values = [values]
-            for txt in values:
-                # strip CR, LF and CRLF so they don't mess up the tag file
-                txt = re.sub(r"\n|\r|(\r\n)", "", force_unicode(txt))
-                f.write("%s: %s\n" % (h, txt))
-
-
-def _load_tag_file(tag_file_name, encoding="utf-8-sig"):
-    with open_text_file(tag_file_name, "r", encoding=encoding) as tag_file:
-        # Store duplicate tags as list of vals
-        # in order of parsing under the same key.
-        tags = {}
-        for name, value in _parse_tags(tag_file):
-            if name not in tags:
-                tags[name] = value
-                continue
-
-            if not isinstance(tags[name], list):
-                tags[name] = [tags[name], value]
-            else:
-                tags[name].append(value)
-
-        return tags
+        yield tag_name, tag_value.strip()
