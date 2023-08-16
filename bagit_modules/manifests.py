@@ -10,7 +10,7 @@ from os.path import join
 from bagit import _, open_text_file
 from bagit_modules.constants import HASH_BLOCK_SIZE, DEFAULT_CHECKSUMS
 from bagit_modules.hashing import get_hashers
-from bagit_modules.filenames import _encode_filename, _decode_filename
+from bagit_modules.filenames import encode_filename, decode_filename
 from bagit_modules.io import _walk, _find_tag_files
 from bagit_modules.logging import LOGGER
 
@@ -47,7 +47,7 @@ def make_manifests(data_dir, processes, algorithms=DEFAULT_CHECKSUMS, encoding="
 
         with open_text_file(manifest_filename, "w", encoding=encoding) as manifest:
             for digest, filename, byte_count in values:
-                manifest.write("%s  %s\n" % (digest, _encode_filename(filename)))
+                manifest.write("%s  %s\n" % (digest, encode_filename(filename)))
                 num_files[algorithm] += 1
                 total_bytes[algorithm] += byte_count
 
@@ -112,7 +112,7 @@ def generate_manifest_lines(filename, algorithms=DEFAULT_CHECKSUMS):
             for hasher in hashers.values():
                 hasher.update(block)
 
-    decoded_filename = _decode_filename(filename)
+    decoded_filename = decode_filename(filename)
 
     # We'll generate a list of results in roughly manifest format but prefixed with the algorithm:
     results = [

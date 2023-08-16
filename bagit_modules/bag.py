@@ -13,7 +13,7 @@ from bagit_modules.concurrency import posix_multiprocessing_worker_initializer
 from bagit_modules.string_ops import force_unicode, normalize_unicode
 from bagit_modules.hashing import _calc_hashes
 from bagit_modules.tagging import make_tag_file, load_tag_file
-from bagit_modules.filenames import _decode_filename
+from bagit_modules.filenames import decode_filename
 from bagit_modules.manifests import make_manifests, make_tagmanifest_file
 from bagit_modules.io import _can_bag, _can_read
 from bagit_modules.logging import LOGGER
@@ -432,7 +432,7 @@ class Bag(object):
 
                     entry_hash = entry[0]
                     entry_path = os.path.normpath(entry[1].lstrip("*"))
-                    entry_path = _decode_filename(entry_path)
+                    entry_path = decode_filename(entry_path)
 
                     if self._path_is_dangerous(entry_path):
                         raise BagError(
