@@ -9,7 +9,7 @@ from bagit import _, open_text_file, VERSION
 from bagit_modules.constants import PROJECT_URL, DEFAULT_CHECKSUMS
 from bagit_modules.tagging import make_tag_file
 from bagit_modules.manifests import make_manifests, make_tagmanifest_file
-from bagit_modules.io import _can_bag, _can_read
+from bagit_modules.io import can_bag, can_read
 from bagit_modules.logging import LOGGER
 from bagit_modules.bag import Bag
 from bagit_modules.errors import BagError
@@ -59,7 +59,7 @@ def make_bag(
         #       bag to a destination other than the source. It would be nice if we could avoid
         #       walking the directory tree more than once even if most filesystems will cache it
 
-        unbaggable = _can_bag(bag_dir)
+        unbaggable = can_bag(bag_dir)
 
         if unbaggable:
             LOGGER.error(
@@ -68,7 +68,7 @@ def make_bag(
             )
             raise BagError(_("Missing permissions to move all files and directories"))
 
-        unreadable_dirs, unreadable_files = _can_read(bag_dir)
+        unreadable_dirs, unreadable_files = can_read(bag_dir)
 
         if unreadable_dirs or unreadable_files:
             if unreadable_dirs:

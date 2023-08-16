@@ -15,7 +15,7 @@ from bagit_modules.hashing import calc_hashes
 from bagit_modules.tagging import make_tag_file, load_tag_file
 from bagit_modules.filenames import decode_filename
 from bagit_modules.manifests import make_manifests, make_tagmanifest_file
-from bagit_modules.io import _can_bag, _can_read
+from bagit_modules.io import can_bag, can_read
 from bagit_modules.logging import LOGGER
 from bagit_modules.errors import BagError, BagValidationError, ChecksumMismatch, FileMissing, UnexpectedFile
 
@@ -225,7 +225,7 @@ class Bag(object):
                 % self.path
             )
 
-        unbaggable = _can_bag(self.path)
+        unbaggable = can_bag(self.path)
         if unbaggable:
             LOGGER.error(
                 _(
@@ -235,7 +235,7 @@ class Bag(object):
             )
             raise BagError(_("Missing permissions to move all files and directories"))
 
-        unreadable_dirs, unreadable_files = _can_read(self.path)
+        unreadable_dirs, unreadable_files = can_read(self.path)
         if unreadable_dirs or unreadable_files:
             if unreadable_dirs:
                 LOGGER.error(

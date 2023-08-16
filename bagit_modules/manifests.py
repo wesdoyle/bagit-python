@@ -11,7 +11,7 @@ from bagit import _, open_text_file
 from bagit_modules.constants import HASH_BLOCK_SIZE, DEFAULT_CHECKSUMS
 from bagit_modules.hashing import get_hashers
 from bagit_modules.filenames import encode_filename, decode_filename
-from bagit_modules.io import _walk, _find_tag_files
+from bagit_modules.io import walk, find_tag_files
 from bagit_modules.logging import LOGGER
 
 
@@ -25,11 +25,11 @@ def make_manifests(data_dir, processes, algorithms=DEFAULT_CHECKSUMS, encoding="
 
     if processes > 1:
         pool = multiprocessing.Pool(processes=processes)
-        checksums = pool.map(manifest_line_generator, _walk(data_dir))
+        checksums = pool.map(manifest_line_generator, walk(data_dir))
         pool.close()
         pool.join()
     else:
-        checksums = [manifest_line_generator(i) for i in _walk(data_dir)]
+        checksums = [manifest_line_generator(i) for i in walk(data_dir)]
 
     # At this point we have a list of tuples which start with the algorithm name:
     manifest_data = {}
@@ -73,7 +73,7 @@ def make_tagmanifest_file(alg, bag_dir, encoding="utf-8"):
     LOGGER.info(_("Creating %s"), tagmanifest_file)
 
     checksums = []
-    for f in _find_tag_files(bag_dir):
+    for f in find_tag_files(bag_dir):
         if re.match(r"^tagmanifest-.+\.txt$", f):
             continue
         with open(join(bag_dir, f), "rb") as fh:

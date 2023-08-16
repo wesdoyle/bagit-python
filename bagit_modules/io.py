@@ -1,11 +1,9 @@
-from __future__ import division, absolute_import, print_function, unicode_literals
-
 import os
 import sys
 from os.path import join
 
 
-def _walk(data_dir):
+def walk(data_dir):
     for dirpath, dirnames, filenames in os.walk(data_dir):
         # if we don't sort here the order of entries is non-deterministic
         # which makes it hard to test the fixity of tagmanifest-md5.txt
@@ -20,7 +18,7 @@ def _walk(data_dir):
             yield path
 
 
-def _can_bag(test_dir):
+def can_bag(test_dir):
     """Scan the provided directory for files which cannot be bagged due to insufficient permissions"""
     unbaggable = []
 
@@ -41,7 +39,7 @@ def _can_bag(test_dir):
     return unbaggable
 
 
-def _find_tag_files(bag_dir):
+def find_tag_files(bag_dir):
     for dir in os.listdir(bag_dir):
         if dir != "data":
             if os.path.isfile(dir) and not dir.startswith("tagmanifest-"):
@@ -55,7 +53,7 @@ def _find_tag_files(bag_dir):
                     yield os.path.relpath(p, bag_dir)
 
 
-def _can_read(test_dir):
+def can_read(test_dir):
     """
     returns ((unreadable_dirs), (unreadable_files))
     """
