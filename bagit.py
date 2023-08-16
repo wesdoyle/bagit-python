@@ -104,46 +104,6 @@ def normalize_unicode(s):
     return unicodedata.normalize("NFC", s)
 
 
-def build_unicode_normalized_lookup_dict(filenames):
-    """
-    Return a dictionary mapping unicode-normalized filenames to as-encoded
-    values to efficiently detect conflicts between the filesystem and manifests.
-
-    This is necessary because some filesystems and utilities may automatically
-    apply a different Unicode normalization form to filenames than was applied
-    when the bag was originally created.
-
-    The best known example of this is when a bag is created using a
-    normalization form other than NFD and then transferred to a Mac where the
-    HFS+ filesystem will transparently normalize filenames to a variant of NFD
-    for every call:
-
-    https://developer.apple.com/legacy/library/technotes/tn/tn1150.html#UnicodeSubtleties
-
-    Windows is documented as storing filenames exactly as provided:
-
-    https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247%28v=vs.85%29.aspx
-
-    Linux performs no normalization in the kernel but it is technically
-    valid for a filesystem to perform normalization, such as when an HFS+
-    volume is mounted.
-
-    See http://www.unicode.org/reports/tr15/ for a full discussion of
-    equivalence and normalization in Unicode.
-    """
-
-    output = dict()
-
-    for filename in filenames:
-        normalized_filename = normalize_unicode(filename)
-        if normalized_filename in output:
-            raise FileNormalizationConflict(filename, output[normalized_filename])
-        else:
-            output[normalized_filename] = filename
-
-    return output
-
-
 def force_unicode(s):
     return str(s)
 
