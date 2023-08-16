@@ -7,7 +7,8 @@ from collections import defaultdict
 from functools import partial
 from os.path import join
 
-from bagit import DEFAULT_CHECKSUMS, _, open_text_file, HASH_BLOCK_SIZE
+from bagit import _, open_text_file
+from bagit_modules.constants import HASH_BLOCK_SIZE, DEFAULT_CHECKSUMS
 from bagit_modules.hashing import get_hashers
 from bagit_modules.filenames import _encode_filename, _decode_filename
 from bagit_modules.io import _walk, _find_tag_files

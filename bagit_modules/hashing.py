@@ -3,7 +3,9 @@ from __future__ import division, absolute_import, print_function, unicode_litera
 import hashlib
 import os
 
-from bagit import force_unicode, _, HASH_BLOCK_SIZE
+from bagit import _
+from bagit_modules.constants import HASH_BLOCK_SIZE
+from bagit_modules.string_ops import force_unicode
 from bagit_modules.errors import BagValidationError
 from bagit_modules.logging import LOGGER
 

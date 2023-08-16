@@ -5,8 +5,8 @@ import tempfile
 import warnings
 from datetime import date
 
-from bagit import _, DEFAULT_CHECKSUMS, open_text_file, VERSION, \
-    PROJECT_URL
+from bagit import _, open_text_file, VERSION
+from bagit_modules.constants import PROJECT_URL, DEFAULT_CHECKSUMS
 from bagit_modules.tagging import _make_tag_file
 from bagit_modules.manifests import make_manifests, _make_tagmanifest_file
 from bagit_modules.io import _can_bag, _can_read

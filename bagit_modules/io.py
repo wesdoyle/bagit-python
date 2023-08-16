@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function, unicode_literals
 
 import os
+import sys
 from os.path import join
 
 
@@ -74,3 +75,10 @@ def _can_read(test_dir):
                 if not os.access(full_path, os.R_OK):
                     unreadable_files.append(full_path)
     return (tuple(unreadable_dirs), tuple(unreadable_files))
+
+
+def find_locale_dir():
+    for prefix in (os.path.dirname(__file__), sys.prefix):
+        locale_dir = os.path.join(prefix, "locale")
+        if os.path.isdir(locale_dir):
+            return locale_dir

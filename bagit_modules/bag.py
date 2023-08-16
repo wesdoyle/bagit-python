@@ -7,8 +7,10 @@ import warnings
 from os.path import abspath, isfile, isdir
 from urllib.parse import urlparse
 
-from bagit import _, CHECKSUM_ALGOS, normalize_unicode, open_text_file, UNICODE_BYTE_ORDER_MARK, \
-    force_unicode, posix_multiprocessing_worker_initializer
+from bagit import _, CHECKSUM_ALGOS, open_text_file
+from bagit_modules.constants import UNICODE_BYTE_ORDER_MARK
+from bagit_modules.concurrency import posix_multiprocessing_worker_initializer
+from bagit_modules.string_ops import force_unicode, normalize_unicode
 from bagit_modules.hashing import _calc_hashes
 from bagit_modules.tagging import _make_tag_file, _load_tag_file
 from bagit_modules.filenames import _decode_filename

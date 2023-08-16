@@ -3,7 +3,8 @@ from __future__ import division, absolute_import, print_function, unicode_litera
 import argparse
 import re
 
-from bagit import VERSION, __doc__, _, DEFAULT_CHECKSUMS, CHECKSUM_ALGOS, STANDARD_BAG_INFO_HEADERS
+from bagit import VERSION, __doc__, _, CHECKSUM_ALGOS, STANDARD_BAG_INFO_HEADERS
+from bagit_modules.constants import DEFAULT_CHECKSUMS
 
 
 class BagArgumentParser(argparse.ArgumentParser):

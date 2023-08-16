@@ -23,6 +23,7 @@ import bagit_modules.bag
 import bagit_modules.bagging
 import bagit_modules.errors
 import bagit_modules.manifests
+import bagit_modules.string_ops
 
 logging.basicConfig(filename="test.log", level=logging.DEBUG)
 stderr = logging.StreamHandler()
@@ -1302,13 +1303,13 @@ class TestUtils(unittest.TestCase):
             self.unicode_class = unicode
 
     def test_force_unicode_str_to_unicode(self):
-        self.assertIsInstance(bagit.force_unicode("foobar"), self.unicode_class)
+        self.assertIsInstance(bagit_modules.string_ops.force_unicode("foobar"), self.unicode_class)
 
     def test_force_unicode_pass_through(self):
-        self.assertIsInstance(bagit.force_unicode("foobar"), self.unicode_class)
+        self.assertIsInstance(bagit_modules.string_ops.force_unicode("foobar"), self.unicode_class)
 
     def test_force_unicode_int(self):
-        self.assertIsInstance(bagit.force_unicode(1234), self.unicode_class)
+        self.assertIsInstance(bagit_modules.string_ops.force_unicode(1234), self.unicode_class)
 
 
 

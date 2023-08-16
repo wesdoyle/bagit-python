@@ -3,7 +3,8 @@ from __future__ import division, absolute_import, print_function, unicode_litera
 import os
 import re
 
-from bagit import _, open_text_file, force_unicode
+from bagit import _, open_text_file
+from bagit_modules.string_ops import force_unicode
 from bagit_modules.errors import BagValidationError
 
 
