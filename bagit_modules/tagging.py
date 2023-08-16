@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function, unicode_literals
-
 import os
 import re
 
@@ -16,8 +14,7 @@ def make_tag_file(bag_info_path, bag_info):
             if not isinstance(values, list):
                 values = [values]
             for txt in values:
-                # strip CR, LF and CRLF so they don't mess up the tag file
-                txt = re.sub(r"\n|\r|(\r\n)", "", force_unicode(txt))
+                txt = force_unicode(txt).replace("\n", "").replace("\r", "")
                 f.write("%s: %s\n" % (h, txt))
 
 
