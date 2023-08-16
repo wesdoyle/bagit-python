@@ -45,25 +45,23 @@ def find_tag_files(bag_dir):
 
 
 def can_read(test_dir):
-    """
-    returns ((unreadable_dirs), (unreadable_files))
-    """
+    """Returns tuples of unreadable directories and unreadable files."""
     unreadable_dirs = []
     unreadable_files = []
 
     if not os.access(test_dir, os.R_OK):
         unreadable_dirs.append(test_dir)
     else:
-        for dirpath, dirnames, filenames in os.walk(test_dir):
-            for dn in dirnames:
-                full_path = os.path.join(dirpath, dn)
+        for dir_path, dir_names, filenames in os.walk(test_dir):
+            for dn in dir_names:
+                full_path = os.path.join(dir_path, dn)
                 if not os.access(full_path, os.R_OK):
                     unreadable_dirs.append(full_path)
             for fn in filenames:
-                full_path = os.path.join(dirpath, fn)
+                full_path = os.path.join(dir_path, fn)
                 if not os.access(full_path, os.R_OK):
                     unreadable_files.append(full_path)
-    return (tuple(unreadable_dirs), tuple(unreadable_files))
+    return tuple(unreadable_dirs), tuple(unreadable_files)
 
 
 def find_locale_dir():
