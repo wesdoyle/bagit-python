@@ -6,3 +6,4 @@ MANIFEST
 bagit.egg-info
 .idea
 .DS_Store
+bagit-python-fork/ # virtual env

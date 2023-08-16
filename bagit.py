@@ -36,13 +36,18 @@ open_text_file = partial(codecs.open, encoding="utf-8", errors="strict")
 
 
 def main():
+    # Command line argument parsing
+    parser = make_parser()
+    args = parser.parse_args()
+
+    configure_logging(args)
+
+    # Version check
     if "--version" in sys.argv:
         print(_("bagit-python version %s") % VERSION)
         sys.exit(0)
 
-    parser = make_parser()
-    args = parser.parse_args()
-
+    # Argument validations
     if args.processes <= 0:
         parser.error(_("The number of processes must be greater than 0"))
 
@@ -52,15 +57,12 @@ def main():
     if args.completeness_only and not args.validate:
         parser.error(_("--completeness-only is only allowed as an option for --validate!"))
 
-    configure_logging(args)
+    error_occurred = False
 
-    rc = 0
-    for bag_dir in args.directory:
-        # validate the bag
-        if args.validate:
+    if args.validate:
+        for bag_dir in args.directory:
             try:
                 bag = Bag(bag_dir)
-                # validate throws a BagError or BagValidationError
                 bag.validate(
                     processes=args.processes,
                     fast=args.fast,
@@ -76,10 +78,10 @@ def main():
                 LOGGER.error(
                     _("%(bag)s is invalid: %(error)s"), {"bag": bag_dir, "error": e}
                 )
-                rc = 1
+                error_occurred = True
 
-        # make the bag
-        else:
+    else:
+        for bag_dir in args.directory:
             try:
                 make_bag(
                     bag_dir,
@@ -93,9 +95,9 @@ def main():
                     {"bag_directory": bag_dir, "error": exc},
                     exc_info=True,
                 )
-                rc = 1
+                error_occurred = True
 
-    sys.exit(rc)
+    sys.exit(1 if error_occurred else 0)
 
 
 if __name__ == "__main__":
