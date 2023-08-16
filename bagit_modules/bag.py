@@ -7,10 +7,14 @@ import warnings
 from os.path import abspath, isfile, isdir
 from urllib.parse import urlparse
 
-from bagit import _, _load_tag_file, CHECKSUM_ALGOS, normalize_unicode, _can_bag, LOGGER, \
-    _can_read, make_manifests, _make_tag_file, _make_tagmanifest_file, open_text_file, UNICODE_BYTE_ORDER_MARK, \
-    _decode_filename, force_unicode, posix_multiprocessing_worker_initializer, \
-    _calc_hashes
+from bagit import _, CHECKSUM_ALGOS, normalize_unicode, open_text_file, UNICODE_BYTE_ORDER_MARK, \
+    force_unicode, posix_multiprocessing_worker_initializer
+from bagit_modules.hashing import _calc_hashes
+from bagit_modules.tagging import _make_tag_file, _load_tag_file
+from bagit_modules.filenames import _decode_filename
+from bagit_modules.manifests import make_manifests, _make_tagmanifest_file
+from bagit_modules.io import _can_bag, _can_read
+from bagit_modules.logging import LOGGER
 from bagit_modules.errors import BagError, BagValidationError, ChecksumMismatch, FileMissing, UnexpectedFile
 
 

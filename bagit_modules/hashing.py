@@ -1,0 +1,85 @@
+from __future__ import division, absolute_import, print_function, unicode_literals
+
+import hashlib
+import os
+
+from bagit import force_unicode, _, HASH_BLOCK_SIZE
+from bagit_modules.errors import BagValidationError
+from bagit_modules.logging import LOGGER
+
+
+def _calc_hashes(args):
+    # auto unpacking of sequences illegal in Python3
+    (base_path, rel_path, hashes, algorithms) = args
+    full_path = os.path.join(base_path, rel_path)
+
+    # Create a clone of the default empty hash objects:
+    f_hashers = dict((alg, hashlib.new(alg)) for alg in hashes if alg in algorithms)
+
+    try:
+        f_hashes = _calculate_file_hashes(full_path, f_hashers)
+    except BagValidationError as e:
+        f_hashes = dict((alg, force_unicode(e)) for alg in f_hashers.keys())
+
+    return rel_path, f_hashes, hashes
+
+
+def _calculate_file_hashes(full_path, f_hashers):
+    """
+    Returns a dictionary of (algorithm, hexdigest) values for the provided
+    filename
+    """
+    LOGGER.info(_("Verifying checksum for file %s"), full_path)
+
+    try:
+        with open(full_path, "rb") as f:
+            while True:
+                block = f.read(HASH_BLOCK_SIZE)
+                if not block:
+                    break
+                for i in f_hashers.values():
+                    i.update(block)
+    except (OSError, IOError) as e:
+        raise BagValidationError(
+            _("Could not read %(filename)s: %(error)s")
+            % {"filename": full_path, "error": force_unicode(e)}
+        )
+
+    return dict((alg, h.hexdigest()) for alg, h in f_hashers.items())
+
+
+def get_hashers(algorithms):
+    """
+    Given a list of algorithm names, return a dictionary of hasher instances
+
+    This avoids redundant code between the creation and validation code where in
+    both cases we want to avoid reading the same file more than once. The
+    intended use is a simple for loop:
+
+        for block in file:
+            for hasher in hashers.values():
+                hasher.update(block)
+    """
+
+    hashers = {}
+
+    for alg in algorithms:
+        try:
+            hasher = hashlib.new(alg)
+        except ValueError:
+            LOGGER.warning(
+                _("Disabling requested hash algorithm %s: hashlib does not support it"),
+                alg,
+            )
+            continue
+
+        hashers[alg] = hasher
+
+    if not hashers:
+        raise ValueError(
+            _(
+                "Unable to continue: hashlib does not support any of the requested algorithms!"
+            )
+        )
+
+    return hashers

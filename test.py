@@ -22,6 +22,7 @@ import bagit
 import bagit_modules.bag
 import bagit_modules.bagging
 import bagit_modules.errors
+import bagit_modules.manifests
 
 logging.basicConfig(filename="test.log", level=logging.DEBUG)
 stderr = logging.StreamHandler()
@@ -937,7 +938,7 @@ Tag-File-Character-Encoding: UTF-8
                 f.write(normalized_bytes)
 
         for alg in bag.algorithms:
-            bagit._make_tagmanifest_file(alg, bag.path, encoding=bag.encoding)
+            bagit_modules.manifests._make_tagmanifest_file(alg, bag.path, encoding=bag.encoding)
 
         # Now we'll reload the whole thing:
         bag = bagit_modules.bag.Bag(self.tmpdir)
