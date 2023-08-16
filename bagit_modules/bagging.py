@@ -24,9 +24,7 @@ def make_bag(
 
     if checksum is not None:
         warnings.warn(
-            _(
-                "The `checksum` argument for `make_bag` should be replaced with `checksums`"
-            ),
+            _("The `checksum` argument for `make_bag` should be replaced with `checksums`"),
             DeprecationWarning,
         )
         checksums = checksum
