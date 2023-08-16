@@ -19,6 +19,9 @@ import mock
 from io import StringIO
 
 import bagit
+import bagit_modules.bag
+import bagit_modules.bagging
+import bagit_modules.errors
 
 logging.basicConfig(filename="test.log", level=logging.DEBUG)
 stderr = logging.StreamHandler()
@@ -73,7 +76,7 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         return bag.validate(*args, **kwargs)
 
     def test_make_bag_sha1_sha256_manifest(self):
-        bag = bagit.make_bag(self.tmpdir, checksum=["sha1", "sha256"])
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, checksum=["sha1", "sha256"])
         # check that relevant manifests are created
         self.assertTrue(os.path.isfile(j(self.tmpdir, "manifest-sha1.txt")))
         self.assertTrue(os.path.isfile(j(self.tmpdir, "manifest-sha256.txt")))
@@ -81,7 +84,7 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         self.assertTrue(self.validate(bag, fast=True))
 
     def test_make_bag_md5_sha256_manifest(self):
-        bag = bagit.make_bag(self.tmpdir, checksum=["md5", "sha256"])
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, checksum=["md5", "sha256"])
         # check that relevant manifests are created
         self.assertTrue(os.path.isfile(j(self.tmpdir, "manifest-md5.txt")))
         self.assertTrue(os.path.isfile(j(self.tmpdir, "manifest-sha256.txt")))
@@ -89,7 +92,7 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         self.assertTrue(self.validate(bag, fast=True))
 
     def test_make_bag_md5_sha1_sha256_manifest(self):
-        bag = bagit.make_bag(self.tmpdir, checksum=["md5", "sha1", "sha256"])
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, checksum=["md5", "sha1", "sha256"])
         # check that relevant manifests are created
         self.assertTrue(os.path.isfile(j(self.tmpdir, "manifest-md5.txt")))
         self.assertTrue(os.path.isfile(j(self.tmpdir, "manifest-sha1.txt")))
@@ -98,59 +101,59 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         self.assertTrue(self.validate(bag, fast=True))
 
     def test_validate_flipped_bit(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         readme = j(self.tmpdir, "data", "README")
         txt = slurp_text_file(readme)
         txt = "A" + txt[1:]
         with open(readme, "w") as r:
             r.write(txt)
-        bag = bagit.Bag(self.tmpdir)
-        self.assertRaises(bagit.BagValidationError, self.validate, bag)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, self.validate, bag)
         # fast doesn't catch the flipped bit, since oxsum is the same
         self.assertTrue(self.validate(bag, fast=True))
         self.assertTrue(self.validate(bag, completeness_only=True))
 
     def test_validate_fast(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         self.assertEqual(self.validate(bag, fast=True), True)
         os.remove(j(self.tmpdir, "data", "loc", "2478433644_2839c5e8b8_o_d.jpg"))
-        self.assertRaises(bagit.BagValidationError, self.validate, bag, fast=True)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, self.validate, bag, fast=True)
 
     def test_validate_completeness(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         old_path = j(self.tmpdir, "data", "README")
         new_path = j(self.tmpdir, "data", "extra_file")
         os.rename(old_path, new_path)
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         self.assertTrue(self.validate(bag, fast=True))
         with mock.patch.object(bag, "_validate_entries") as m:
             self.assertRaises(
-                bagit.BagValidationError, self.validate, bag, completeness_only=True
+                bagit_modules.bag_error.BagValidationError, self.validate, bag, completeness_only=True
             )
             self.assertEqual(m.call_count, 0)
 
     def test_validate_fast_without_oxum(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         os.remove(j(self.tmpdir, "bag-info.txt"))
-        bag = bagit.Bag(self.tmpdir)
-        self.assertRaises(bagit.BagValidationError, self.validate, bag, fast=True)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, self.validate, bag, fast=True)
 
     def test_validate_slow_without_oxum_extra_file(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         os.remove(j(self.tmpdir, "bag-info.txt"))
         with open(j(self.tmpdir, "data", "extra_file"), "w") as ef:
             ef.write("foo")
-        bag = bagit.Bag(self.tmpdir)
-        self.assertRaises(bagit.BagValidationError, self.validate, bag, fast=False)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, self.validate, bag, fast=False)
 
     def test_validate_missing_directory(self):
-        bagit.make_bag(self.tmpdir)
+        bagit_modules.bagging.make_bag(self.tmpdir)
 
         tmp_data_dir = os.path.join(self.tmpdir, "data")
         shutil.rmtree(tmp_data_dir)
 
-        bag = bagit.Bag(self.tmpdir)
-        with self.assertRaises(bagit.BagValidationError) as error_catcher:
+        bag = bagit_modules.bag.Bag(self.tmpdir)
+        with self.assertRaises(bagit_modules.bag_error.BagValidationError) as error_catcher:
             bag.validate()
 
         self.assertEqual(
@@ -159,7 +162,7 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         )
 
     def test_validation_error_details(self):
-        bag = bagit.make_bag(
+        bag = bagit_modules.bagging.make_bag(
             self.tmpdir, checksums=["md5"], bag_info={"Bagging-Date": "1970-01-01"}
         )
         readme = j(self.tmpdir, "data", "README")
@@ -168,12 +171,12 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         with open(readme, "w") as r:
             r.write(txt)
 
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         got_exception = False
 
         try:
             self.validate(bag)
-        except bagit.BagValidationError as e:
+        except bagit_modules.bag_error.BagValidationError as e:
             got_exception = True
 
             exc_str = str(e)
@@ -188,7 +191,7 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
                 'data/README md5 validation failed: expected="8e2af7a0143c7b8f4de0b3fc90f27354" found="fd41543285d17e7c29cd953f5cf5b955"',
                 str(readme_error),
             )
-            self.assertIsInstance(readme_error, bagit.ChecksumMismatch)
+            self.assertIsInstance(readme_error, bagit_modules.bag_error.ChecksumMismatch)
             self.assertEqual(readme_error.algorithm, "md5")
             self.assertEqual(readme_error.path, "data/README")
             self.assertEqual(readme_error.expected, "8e2af7a0143c7b8f4de0b3fc90f27354")
@@ -198,7 +201,7 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
             self.fail("didn't get BagValidationError")
 
     def test_validation_completeness_error_details(self):
-        bag = bagit.make_bag(
+        bag = bagit_modules.bagging.make_bag(
             self.tmpdir, checksums=["md5"], bag_info={"Bagging-Date": "1970-01-01"}
         )
 
@@ -210,12 +213,12 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         # check of the manifest
         os.remove(j(self.tmpdir, "bag-info.txt"))
 
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         got_exception = False
 
         try:
             self.validate(bag)
-        except bagit.BagValidationError as e:
+        except bagit_modules.bag_error.BagValidationError as e:
             got_exception = True
 
             exc_str = str(e)
@@ -244,28 +247,28 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
                 str(baginfo_error),
                 "bag-info.txt exists in manifest but was not found on filesystem",
             )
-            self.assertIsInstance(baginfo_error, bagit.FileMissing)
+            self.assertIsInstance(baginfo_error, bagit_modules.errors.FileMissing)
             self.assertEqual(baginfo_error.path, "bag-info.txt")
 
             self.assertEqual(
                 str(readme_error),
                 "data/README exists in manifest but was not found on filesystem",
             )
-            self.assertIsInstance(readme_error, bagit.FileMissing)
+            self.assertIsInstance(readme_error, bagit_modules.errors.FileMissing)
             self.assertEqual(readme_error.path, "data/README")
 
             error = e.details[2]
             self.assertEqual(
                 str(error), "data/extra exists on filesystem but is not in the manifest"
             )
-            self.assertTrue(error, bagit.UnexpectedFile)
+            self.assertTrue(error, bagit_modules.errors.UnexpectedFile)
             self.assertEqual(error.path, "data/extra")
 
         if not got_exception:
             self.fail("didn't get BagValidationError")
 
     def test_bom_in_bagit_txt(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         BOM = codecs.BOM_UTF8
         if sys.version_info[0] >= 3:
             BOM = BOM.decode("utf-8")
@@ -273,48 +276,48 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
             bagfile = BOM + bf.read()
         with open(j(self.tmpdir, "bagit.txt"), "w") as bf:
             bf.write(bagfile)
-        bag = bagit.Bag(self.tmpdir)
-        self.assertRaises(bagit.BagValidationError, self.validate, bag)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, self.validate, bag)
 
     def test_missing_file(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         os.remove(j(self.tmpdir, "data", "loc", "3314493806_6f1db86d66_o_d.jpg"))
-        self.assertRaises(bagit.BagValidationError, self.validate, bag)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, self.validate, bag)
 
     def test_handle_directory_end_slash_gracefully(self):
-        bag = bagit.make_bag(self.tmpdir + "/")
+        bag = bagit_modules.bagging.make_bag(self.tmpdir + "/")
         self.assertTrue(self.validate(bag))
-        bag2 = bagit.Bag(self.tmpdir + "/")
+        bag2 = bagit_modules.bag.Bag(self.tmpdir + "/")
         self.assertTrue(self.validate(bag2))
 
     def test_allow_extraneous_files_in_base(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         self.assertTrue(self.validate(bag))
         f = j(self.tmpdir, "IGNOREFILE")
         with open(f, "w"):
             self.assertTrue(self.validate(bag))
 
     def test_allow_extraneous_dirs_in_base(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         self.assertTrue(self.validate(bag))
         d = j(self.tmpdir, "IGNOREDIR")
         os.mkdir(d)
         self.assertTrue(self.validate(bag))
 
     def test_missing_tagfile_raises_error(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         self.assertTrue(self.validate(bag))
         os.remove(j(self.tmpdir, "bagit.txt"))
-        self.assertRaises(bagit.BagValidationError, self.validate, bag)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, self.validate, bag)
 
     def test_missing_manifest_raises_error(self):
-        bag = bagit.make_bag(self.tmpdir, checksums=["sha512"])
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, checksums=["sha512"])
         self.assertTrue(self.validate(bag))
         os.remove(j(self.tmpdir, "manifest-sha512.txt"))
-        self.assertRaises(bagit.BagValidationError, self.validate, bag)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, self.validate, bag)
 
     def test_mixed_case_checksums(self):
-        bag = bagit.make_bag(self.tmpdir, checksums=["md5"])
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, checksums=["md5"])
         hashstr = {}
         # Extract entries only for the payload and ignore
         # entries from the tagmanifest file
@@ -342,7 +345,7 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         with open(j(self.tmpdir, "tagmanifest-md5.txt"), "w") as tagmanifest:
             tagmanifest.write(tagman_contents)
 
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         self.assertTrue(self.validate(bag))
 
     def test_unsafe_directory_entries_raise_error(self):
@@ -369,21 +372,21 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         corpus = "this is not a real checksum"
         hasher.update(corpus.encode("utf-8"))
         for bad_path in bad_paths:
-            bagit.make_bag(self.tmpdir, checksums=["md5"])
+            bagit_modules.bagging.make_bag(self.tmpdir, checksums=["md5"])
             with open(j(self.tmpdir, "manifest-md5.txt"), "wb+") as manifest_out:
                 line = "%s %s\n" % (hasher.hexdigest(), bad_path)
                 manifest_out.write(line.encode("utf-8"))
-            self.assertRaises(bagit.BagError, bagit.Bag, self.tmpdir)
+            self.assertRaises(bagit_modules.bag_error.BagError, bagit_modules.bag.Bag, self.tmpdir)
 
     def test_multiple_oxum_values(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         with open(j(self.tmpdir, "bag-info.txt"), "a") as baginfo:
             baginfo.write("Payload-Oxum: 7.7\n")
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         self.assertTrue(self.validate(bag, fast=True))
 
     def test_validate_optional_tagfile(self):
-        bag = bagit.make_bag(self.tmpdir, checksums=["md5"])
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, checksums=["md5"])
         tagdir = tempfile.mkdtemp(dir=self.tmpdir)
         with open(j(tagdir, "tagfile"), "w") as tagfile:
             tagfile.write("test")
@@ -392,24 +395,24 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         with open(j(self.tmpdir, "tagmanifest-md5.txt"), "w") as tagman:
             # Incorrect checksum.
             tagman.write("8e2af7a0143c7b8f4de0b3fc90f27354 " + relpath + "\n")
-        bag = bagit.Bag(self.tmpdir)
-        self.assertRaises(bagit.BagValidationError, self.validate, bag)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, self.validate, bag)
 
         hasher = hashlib.new("md5")
         contents = slurp_text_file(j(tagdir, "tagfile")).encode("utf-8")
         hasher.update(contents)
         with open(j(self.tmpdir, "tagmanifest-md5.txt"), "w") as tagman:
             tagman.write(hasher.hexdigest() + " " + relpath + "\n")
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         self.assertTrue(self.validate(bag))
 
         # Missing tagfile.
         os.remove(j(tagdir, "tagfile"))
-        bag = bagit.Bag(self.tmpdir)
-        self.assertRaises(bagit.BagValidationError, self.validate, bag)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, self.validate, bag)
 
     def test_validate_optional_tagfile_in_directory(self):
-        bag = bagit.make_bag(self.tmpdir, checksums=["md5"])
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, checksums=["md5"])
         tagdir = tempfile.mkdtemp(dir=self.tmpdir)
 
         if not os.path.exists(j(tagdir, "tagfolder")):
@@ -422,8 +425,8 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         with open(j(self.tmpdir, "tagmanifest-md5.txt"), "w") as tagman:
             # Incorrect checksum.
             tagman.write("8e2af7a0143c7b8f4de0b3fc90f27354 " + relpath + "\n")
-        bag = bagit.Bag(self.tmpdir)
-        self.assertRaises(bagit.BagValidationError, self.validate, bag)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, self.validate, bag)
 
         hasher = hashlib.new("md5")
         with open(j(tagdir, "tagfolder", "tagfile"), "r") as tf:
@@ -431,17 +434,17 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         hasher.update(contents)
         with open(j(self.tmpdir, "tagmanifest-md5.txt"), "w") as tagman:
             tagman.write(hasher.hexdigest() + " " + relpath + "\n")
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         self.assertTrue(self.validate(bag))
 
         # Missing tagfile.
         os.remove(j(tagdir, "tagfolder", "tagfile"))
-        bag = bagit.Bag(self.tmpdir)
-        self.assertRaises(bagit.BagValidationError, self.validate, bag)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, self.validate, bag)
 
     def test_sha1_tagfile(self):
         info = {"Bagging-Date": "1970-01-01", "Contact-Email": "ehs@pobox.com"}
-        bag = bagit.make_bag(self.tmpdir, checksum=["sha1"], bag_info=info)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, checksum=["sha1"], bag_info=info)
         self.assertTrue(os.path.isfile(j(self.tmpdir, "tagmanifest-sha1.txt")))
         self.assertEqual(
             "f69110479d0d395f7c321b3860c2bc0c96ae9fe8",
@@ -449,9 +452,9 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         )
 
     def test_validate_unreadable_file(self):
-        bag = bagit.make_bag(self.tmpdir, checksum=["md5"])
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, checksum=["md5"])
         os.chmod(j(self.tmpdir, "data/loc/2478433644_2839c5e8b8_o_d.jpg"), 0)
-        self.assertRaises(bagit.BagValidationError, self.validate, bag, fast=False)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, self.validate, bag, fast=False)
 
 
 class TestMultiprocessValidation(TestSingleProcessValidation):
@@ -467,7 +470,7 @@ class TestMultiprocessValidation(TestSingleProcessValidation):
 class TestBag(SelfCleaningTestCase):
     def test_make_bag(self):
         info = {"Bagging-Date": "1970-01-01", "Contact-Email": "ehs@pobox.com"}
-        bagit.make_bag(self.tmpdir, bag_info=info, checksums=["md5"])
+        bagit_modules.bagging.make_bag(self.tmpdir, bag_info=info, checksums=["md5"])
 
         # data dir should've been created
         self.assertTrue(os.path.isdir(j(self.tmpdir, "data")))
@@ -523,7 +526,7 @@ class TestBag(SelfCleaningTestCase):
         self.assertIn("0a6ffcffe67e9a34e44220f7ebcb4baa bag-info.txt", tagmanifest_txt)
 
     def test_make_bag_sha1_manifest(self):
-        bagit.make_bag(self.tmpdir, checksum=["sha1"])
+        bagit_modules.bagging.make_bag(self.tmpdir, checksum=["sha1"])
         # check manifest
         self.assertTrue(os.path.isfile(j(self.tmpdir, "manifest-sha1.txt")))
         manifest_txt = slurp_text_file(j(self.tmpdir, "manifest-sha1.txt")).splitlines()
@@ -548,7 +551,7 @@ class TestBag(SelfCleaningTestCase):
         )
 
     def test_make_bag_sha256_manifest(self):
-        bagit.make_bag(self.tmpdir, checksum=["sha256"])
+        bagit_modules.bagging.make_bag(self.tmpdir, checksum=["sha256"])
         # check manifest
         self.assertTrue(os.path.isfile(j(self.tmpdir, "manifest-sha256.txt")))
         manifest_txt = slurp_text_file(
@@ -572,7 +575,7 @@ class TestBag(SelfCleaningTestCase):
         )
 
     def test_make_bag_sha512_manifest(self):
-        bagit.make_bag(self.tmpdir, checksum=["sha512"])
+        bagit_modules.bagging.make_bag(self.tmpdir, checksum=["sha512"])
         # check manifest
         self.assertTrue(os.path.isfile(j(self.tmpdir, "manifest-sha512.txt")))
         manifest_txt = slurp_text_file(
@@ -597,13 +600,13 @@ class TestBag(SelfCleaningTestCase):
 
     def test_make_bag_unknown_algorithm(self):
         self.assertRaises(
-            ValueError, bagit.make_bag, self.tmpdir, checksum=["not-really-a-name"]
+            ValueError, bagit_modules.bagging.make_bag, self.tmpdir, checksum=["not-really-a-name"]
         )
 
     def test_make_bag_with_empty_directory(self):
         tmpdir = tempfile.mkdtemp()
         try:
-            bagit.make_bag(tmpdir)
+            bagit_modules.bagging.make_bag(tmpdir)
         finally:
             shutil.rmtree(tmpdir)
 
@@ -612,7 +615,7 @@ class TestBag(SelfCleaningTestCase):
         path = j(tmpdir, "test1", "test2")
         try:
             os.makedirs(path)
-            bagit.make_bag(tmpdir)
+            bagit_modules.bagging.make_bag(tmpdir)
         finally:
             shutil.rmtree(tmpdir)
 
@@ -620,7 +623,7 @@ class TestBag(SelfCleaningTestCase):
         bogus_directory = os.path.realpath("this-directory-does-not-exist")
 
         with self.assertRaises(RuntimeError) as error_catcher:
-            bagit.make_bag(bogus_directory)
+            bagit_modules.bagging.make_bag(bogus_directory)
 
         self.assertEqual(
             "Bag directory %s does not exist" % bogus_directory,
@@ -630,8 +633,8 @@ class TestBag(SelfCleaningTestCase):
     def test_make_bag_with_unreadable_source(self):
         os.chmod(self.tmpdir, 0)
 
-        with self.assertRaises(bagit.BagError) as error_catcher:
-            bagit.make_bag(self.tmpdir, checksum=["sha256"])
+        with self.assertRaises(bagit_modules.bag_error.BagError) as error_catcher:
+            bagit_modules.bagging.make_bag(self.tmpdir, checksum=["sha256"])
 
         self.assertEqual(
             "Missing permissions to move all files and directories",
@@ -642,8 +645,8 @@ class TestBag(SelfCleaningTestCase):
         # We'll set this write-only to exercise the second permission check in make_bag:
         os.chmod(j(self.tmpdir, "loc"), 0o200)
 
-        with self.assertRaises(bagit.BagError) as error_catcher:
-            bagit.make_bag(self.tmpdir, checksum=["sha256"])
+        with self.assertRaises(bagit_modules.bag_error.BagError) as error_catcher:
+            bagit_modules.bagging.make_bag(self.tmpdir, checksum=["sha256"])
 
         self.assertEqual(
             "Read permissions are required to calculate file fixities",
@@ -656,8 +659,8 @@ class TestBag(SelfCleaningTestCase):
         for path_suffix in reversed(path_suffixes):
             os.chmod(j(self.tmpdir, path_suffix), 0o500)
 
-        with self.assertRaises(bagit.BagError) as error_catcher:
-            bagit.make_bag(self.tmpdir, checksum=["sha256"])
+        with self.assertRaises(bagit_modules.bag_error.BagError) as error_catcher:
+            bagit_modules.bagging.make_bag(self.tmpdir, checksum=["sha256"])
 
         self.assertEqual(
             "Missing permissions to move all files and directories",
@@ -667,8 +670,8 @@ class TestBag(SelfCleaningTestCase):
     def test_make_bag_with_unreadable_file(self):
         os.chmod(j(self.tmpdir, "loc", "2478433644_2839c5e8b8_o_d.jpg"), 0)
 
-        with self.assertRaises(bagit.BagError) as error_catcher:
-            bagit.make_bag(self.tmpdir, checksum=["sha256"])
+        with self.assertRaises(bagit_modules.bag_error.BagError) as error_catcher:
+            bagit_modules.bagging.make_bag(self.tmpdir, checksum=["sha256"])
 
         self.assertEqual(
             "Read permissions are required to calculate file fixities",
@@ -677,15 +680,15 @@ class TestBag(SelfCleaningTestCase):
 
     def test_make_bag_with_data_dir_present(self):
         os.mkdir(j(self.tmpdir, "data"))
-        bagit.make_bag(self.tmpdir)
+        bagit_modules.bagging.make_bag(self.tmpdir)
 
         # data dir should now contain another data dir
         self.assertTrue(os.path.isdir(j(self.tmpdir, "data", "data")))
 
     def test_bag_class(self):
         info = {"Contact-Email": "ehs@pobox.com"}
-        bag = bagit.make_bag(self.tmpdir, bag_info=info, checksums=["sha384"])
-        self.assertIsInstance(bag, bagit.Bag)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, bag_info=info, checksums=["sha384"])
+        self.assertIsInstance(bag, bagit_modules.bag.Bag)
         self.assertEqual(
             set(bag.payload_files()),
             set(
@@ -703,44 +706,44 @@ class TestBag(SelfCleaningTestCase):
         )
 
     def test_bag_string_representation(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         self.assertEqual(self.tmpdir, str(bag))
 
     def test_has_oxum(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         self.assertTrue(bag.has_oxum())
 
     def test_bag_constructor(self):
-        bag = bagit.make_bag(self.tmpdir)
-        bag = bagit.Bag(self.tmpdir)
-        self.assertEqual(type(bag), bagit.Bag)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
+        self.assertEqual(type(bag), bagit_modules.bag.Bag)
         self.assertEqual(len(list(bag.payload_files())), 5)
 
     def test_is_valid(self):
-        bag = bagit.make_bag(self.tmpdir)
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         self.assertTrue(bag.is_valid())
         with open(j(self.tmpdir, "data", "extra_file"), "w") as ef:
             ef.write("bar")
         self.assertFalse(bag.is_valid())
 
     def test_garbage_in_bagit_txt(self):
-        bagit.make_bag(self.tmpdir)
+        bagit_modules.bagging.make_bag(self.tmpdir)
         bagfile = """BagIt-Version: 0.97
 Tag-File-Character-Encoding: UTF-8
 ==================================
 """
         with open(j(self.tmpdir, "bagit.txt"), "w") as bf:
             bf.write(bagfile)
-        self.assertRaises(bagit.BagValidationError, bagit.Bag, self.tmpdir)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, bagit_modules.bag.Bag, self.tmpdir)
 
     def test_make_bag_multiprocessing(self):
-        bagit.make_bag(self.tmpdir, processes=2)
+        bagit_modules.bagging.make_bag(self.tmpdir, processes=2)
         self.assertTrue(os.path.isdir(j(self.tmpdir, "data")))
 
     def test_multiple_meta_values(self):
         baginfo = {"Multival-Meta": [7, 4, 8, 6, 8]}
-        bag = bagit.make_bag(self.tmpdir, baginfo)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, baginfo)
         meta = bag.info.get("Multival-Meta")
         self.assertEqual(type(meta), list)
         self.assertEqual(len(meta), len(baginfo["Multival-Meta"]))
@@ -751,14 +754,14 @@ Tag-File-Character-Encoding: UTF-8
             "Test-SMP": "This element contains a \N{LINEAR B SYMBOL B049}",
         }
 
-        bagit.make_bag(self.tmpdir, bag_info=info, checksums=["md5"])
+        bagit_modules.bagging.make_bag(self.tmpdir, bag_info=info, checksums=["md5"])
 
         bag_info_txt = slurp_text_file(j(self.tmpdir, "bag-info.txt"))
         for v in info.values():
             self.assertIn(v, bag_info_txt)
 
     def test_unusual_bag_info_separators(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
 
         with open(j(self.tmpdir, "bag-info.txt"), "a") as f:
             print("Test-Tag: 1", file=f)
@@ -768,7 +771,7 @@ Tag-File-Character-Encoding: UTF-8
             print("Test-Tag\t \t: 5", file=f)
             print("Test-Tag:\t \t 6", file=f)
 
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         bag.save(manifests=True)
 
         self.assertTrue(bag.is_valid())
@@ -776,7 +779,7 @@ Tag-File-Character-Encoding: UTF-8
 
     def test_default_bagging_date(self):
         info = {"Contact-Email": "ehs@pobox.com"}
-        bagit.make_bag(self.tmpdir, bag_info=info)
+        bagit_modules.bagging.make_bag(self.tmpdir, bag_info=info)
         bag_info_txt = slurp_text_file(j(self.tmpdir, "bag-info.txt"))
         self.assertTrue("Contact-Email: ehs@pobox.com" in bag_info_txt)
         today = datetime.date.strftime(datetime.date.today(), "%Y-%m-%d")
@@ -784,7 +787,7 @@ Tag-File-Character-Encoding: UTF-8
 
     def test_missing_tagmanifest_valid(self):
         info = {"Contact-Email": "ehs@pobox.com"}
-        bag = bagit.make_bag(self.tmpdir, bag_info=info, checksums=["md5"])
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, bag_info=info, checksums=["md5"])
         self.assertTrue(bag.is_valid())
         os.remove(j(self.tmpdir, "tagmanifest-md5.txt"))
         self.assertTrue(bag.is_valid())
@@ -792,7 +795,7 @@ Tag-File-Character-Encoding: UTF-8
     def test_carriage_return_manifest(self):
         with open(j(self.tmpdir, "newline\r"), "w") as whatever:
             whatever.write("ugh")
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         self.assertTrue(bag.is_valid())
 
     def test_payload_permissions(self):
@@ -806,16 +809,16 @@ Tag-File-Character-Encoding: UTF-8
         new_perms = perms | stat.S_IWOTH
         self.assertTrue(perms != new_perms)
         os.chmod(self.tmpdir, new_perms)
-        bagit.make_bag(self.tmpdir)
+        bagit_modules.bagging.make_bag(self.tmpdir)
         payload_dir = j(self.tmpdir, "data")
         self.assertEqual(os.stat(payload_dir).st_mode, new_perms)
 
     def test_save_bag_to_unwritable_directory(self):
-        bag = bagit.make_bag(self.tmpdir, checksum=["sha256"])
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, checksum=["sha256"])
 
         os.chmod(self.tmpdir, 0)
 
-        with self.assertRaises(bagit.BagError) as error_catcher:
+        with self.assertRaises(bagit_modules.bag_error.BagError) as error_catcher:
             bag.save()
 
         self.assertEqual(
@@ -825,11 +828,11 @@ Tag-File-Character-Encoding: UTF-8
         )
 
     def test_save_bag_with_unwritable_file(self):
-        bag = bagit.make_bag(self.tmpdir, checksum=["sha256"])
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, checksum=["sha256"])
 
         os.chmod(os.path.join(self.tmpdir, "bag-info.txt"), 0)
 
-        with self.assertRaises(bagit.BagError) as error_catcher:
+        with self.assertRaises(bagit_modules.bag_error.BagError) as error_catcher:
             bag.save()
 
         self.assertEqual(
@@ -838,70 +841,70 @@ Tag-File-Character-Encoding: UTF-8
         )
 
     def test_save_manifests(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         self.assertTrue(bag.is_valid())
         bag.save(manifests=True)
         self.assertTrue(bag.is_valid())
         with open(j(self.tmpdir, "data", "newfile"), "w") as nf:
             nf.write("newfile")
-        self.assertRaises(bagit.BagValidationError, bag.validate, bag, fast=False)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, bag.validate, bag, fast=False)
         bag.save(manifests=True)
         self.assertTrue(bag.is_valid())
 
     def test_save_manifests_deleted_files(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         self.assertTrue(bag.is_valid())
         bag.save(manifests=True)
         self.assertTrue(bag.is_valid())
         os.remove(j(self.tmpdir, "data", "loc", "2478433644_2839c5e8b8_o_d.jpg"))
-        self.assertRaises(bagit.BagValidationError, bag.validate, bag, fast=False)
+        self.assertRaises(bagit_modules.bag_error.BagValidationError, bag.validate, bag, fast=False)
         bag.save(manifests=True)
         self.assertTrue(bag.is_valid())
 
     def test_save_baginfo(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
 
         bag.info["foo"] = "bar"
         bag.save()
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         self.assertEqual(bag.info["foo"], "bar")
         self.assertTrue(bag.is_valid())
 
         bag.info["x"] = ["a", "b", "c"]
         bag.save()
-        b = bagit.Bag(self.tmpdir)
+        b = bagit_modules.bag.Bag(self.tmpdir)
         self.assertEqual(b.info["x"], ["a", "b", "c"])
         self.assertTrue(bag.is_valid())
 
     def test_save_baginfo_with_sha1(self):
-        bag = bagit.make_bag(self.tmpdir, checksum=["sha1", "md5"])
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, checksum=["sha1", "md5"])
         self.assertTrue(bag.is_valid())
         bag.save()
 
         bag.info["foo"] = "bar"
         bag.save()
 
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         self.assertTrue(bag.is_valid())
 
     def test_save_only_baginfo(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         with open(j(self.tmpdir, "data", "newfile"), "w") as nf:
             nf.write("newfile")
         bag.info["foo"] = "bar"
         bag.save()
 
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         self.assertEqual(bag.info["foo"], "bar")
         self.assertFalse(bag.is_valid())
 
     def test_make_bag_with_newline(self):
-        bag = bagit.make_bag(self.tmpdir, {"test": "foo\nbar"})
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, {"test": "foo\nbar"})
         self.assertEqual(bag.info["test"], "foobar")
 
     def test_unicode_in_tags(self):
-        bag = bagit.make_bag(self.tmpdir, {"test": "♡"})
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir, {"test": "♡"})
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         self.assertEqual(bag.info["test"], "♡")
 
     def test_filename_unicode_normalization(self):
@@ -921,7 +924,7 @@ Tag-File-Character-Encoding: UTF-8
         with open(j(self.tmpdir, "unicode-normalization", test_filename_nfd), "w") as f:
             f.write("This is a test filename written using NFD normalization\n")
 
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         bag.save()
 
         self.assertTrue(bag.is_valid())
@@ -937,16 +940,16 @@ Tag-File-Character-Encoding: UTF-8
             bagit._make_tagmanifest_file(alg, bag.path, encoding=bag.encoding)
 
         # Now we'll reload the whole thing:
-        bag = bagit.Bag(self.tmpdir)
+        bag = bagit_modules.bag.Bag(self.tmpdir)
         self.assertTrue(bag.is_valid())
 
     def test_open_bag_with_missing_bagit_txt(self):
-        bagit.make_bag(self.tmpdir)
+        bagit_modules.bagging.make_bag(self.tmpdir)
 
         os.unlink(j(self.tmpdir, "bagit.txt"))
 
-        with self.assertRaises(bagit.BagError) as error_catcher:
-            bagit.Bag(self.tmpdir)
+        with self.assertRaises(bagit_modules.bag_error.BagError) as error_catcher:
+            bagit_modules.bag.Bag(self.tmpdir)
 
         self.assertEqual(
             "Expected bagit.txt does not exist: %s/bagit.txt" % self.tmpdir,
@@ -954,13 +957,13 @@ Tag-File-Character-Encoding: UTF-8
         )
 
     def test_open_bag_with_malformed_bagit_txt(self):
-        bagit.make_bag(self.tmpdir)
+        bagit_modules.bagging.make_bag(self.tmpdir)
 
         with open(j(self.tmpdir, "bagit.txt"), "w") as f:
             os.ftruncate(f.fileno(), 0)
 
-        with self.assertRaises(bagit.BagError) as error_catcher:
-            bagit.Bag(self.tmpdir)
+        with self.assertRaises(bagit_modules.bag_error.BagError) as error_catcher:
+            bagit_modules.bag.Bag(self.tmpdir)
 
         self.assertEqual(
             "Missing required tag in bagit.txt: BagIt-Version, Tag-File-Character-Encoding",
@@ -968,14 +971,14 @@ Tag-File-Character-Encoding: UTF-8
         )
 
     def test_open_bag_with_invalid_versions(self):
-        bagit.make_bag(self.tmpdir)
+        bagit_modules.bagging.make_bag(self.tmpdir)
 
         for v in ("a.b", "2.", "0.1.2", "1.2.3"):
             with open(j(self.tmpdir, "bagit.txt"), "w") as f:
                 f.write("BagIt-Version: %s\nTag-File-Character-Encoding: UTF-8\n" % v)
 
-            with self.assertRaises(bagit.BagError) as error_catcher:
-                bagit.Bag(self.tmpdir)
+            with self.assertRaises(bagit_modules.bag_error.BagError) as error_catcher:
+                bagit_modules.bag.Bag(self.tmpdir)
 
             self.assertEqual(
                 "Bag version numbers must be MAJOR.MINOR numbers, not %s" % v,
@@ -983,24 +986,24 @@ Tag-File-Character-Encoding: UTF-8
             )
 
     def test_open_bag_with_unsupported_version(self):
-        bagit.make_bag(self.tmpdir)
+        bagit_modules.bagging.make_bag(self.tmpdir)
 
         with open(j(self.tmpdir, "bagit.txt"), "w") as f:
             f.write("BagIt-Version: 2.0\nTag-File-Character-Encoding: UTF-8\n")
 
-        with self.assertRaises(bagit.BagError) as error_catcher:
-            bagit.Bag(self.tmpdir)
+        with self.assertRaises(bagit_modules.bag_error.BagError) as error_catcher:
+            bagit_modules.bag.Bag(self.tmpdir)
 
         self.assertEqual("Unsupported bag version: 2.0", str(error_catcher.exception))
 
     def test_open_bag_with_unknown_encoding(self):
-        bagit.make_bag(self.tmpdir)
+        bagit_modules.bagging.make_bag(self.tmpdir)
 
         with open(j(self.tmpdir, "bagit.txt"), "w") as f:
             f.write("BagIt-Version: 0.97\nTag-File-Character-Encoding: WTF-8\n")
 
-        with self.assertRaises(bagit.BagError) as error_catcher:
-            bagit.Bag(self.tmpdir)
+        with self.assertRaises(bagit_modules.bag_error.BagError) as error_catcher:
+            bagit_modules.bag.Bag(self.tmpdir)
 
         self.assertEqual("Unsupported encoding: WTF-8", str(error_catcher.exception))
 
@@ -1011,7 +1014,7 @@ class TestFetch(SelfCleaningTestCase):
 
         # All of these tests will involve fetch.txt usage with an existing bag
         # so we'll simply create one:
-        self.bag = bagit.make_bag(self.tmpdir)
+        self.bag = bagit_modules.bagging.make_bag(self.tmpdir)
 
     def test_fetch_loader(self):
         with open(j(self.tmpdir, "fetch.txt"), "w") as fetch_txt:
@@ -1051,7 +1054,7 @@ class TestFetch(SelfCleaningTestCase):
 
         self.bag.save(manifests=True)
 
-        with mock.patch.object(bagit.Bag, "validate_fetch") as mock_vf:
+        with mock.patch.object(bagit_modules.bag.Bag, "validate_fetch") as mock_vf:
             self.bag.validate()
             self.assertTrue(
                 mock_vf.called, msg="Bag.validate() should call Bag.validate_fetch()"
@@ -1071,13 +1074,13 @@ class TestFetch(SelfCleaningTestCase):
         # We expect both validate() and fetch entry iteration to raise errors on security hazards
         # so we'll test both:
 
-        with self.assertRaises(bagit.BagError) as cm:
+        with self.assertRaises(bagit_modules.bag_error.BagError) as cm:
             self.bag.validate()
 
         self.assertEqual(expected_msg, str(cm.exception))
 
         # Note the use of list() to exhaust the fetch_entries generator:
-        with self.assertRaises(bagit.BagError) as cm:
+        with self.assertRaises(bagit_modules.bag_error.BagError) as cm:
             list(self.bag.fetch_entries())
 
         self.assertEqual(expected_msg, str(cm.exception))
@@ -1095,7 +1098,7 @@ class TestFetch(SelfCleaningTestCase):
             "Malformed URL in fetch.txt: //photojournal.jpl.nasa.gov/jpeg/PIA21390.jpg"
         )
 
-        with self.assertRaises(bagit.BagError) as cm:
+        with self.assertRaises(bagit_modules.bag_error.BagError) as cm:
             self.bag.validate_fetch()
 
         self.assertEqual(expected_msg, str(cm.exception))
@@ -1133,7 +1136,7 @@ class TestCLI(SelfCleaningTestCase):
 
     @mock.patch('sys.stderr', new_callable=StringIO)
     def test_fast_flag_without_validate(self, mock_stderr):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         testargs = ["bagit.py", "--fast", self.tmpdir]
 
         with self.assertRaises(SystemExit) as cm:
@@ -1147,7 +1150,7 @@ class TestCLI(SelfCleaningTestCase):
         )
 
     def test_invalid_fast_validate(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         os.remove(j(self.tmpdir, "data", "loc", "2478433644_2839c5e8b8_o_d.jpg"))
         testargs = ["bagit.py", "--validate", "--completeness-only", self.tmpdir]
 
@@ -1163,7 +1166,7 @@ class TestCLI(SelfCleaningTestCase):
         )
 
     def test_valid_fast_validate(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         testargs = ["bagit.py", "--validate", "--fast", self.tmpdir]
 
         with self.assertLogs() as captured:
@@ -1179,7 +1182,7 @@ class TestCLI(SelfCleaningTestCase):
 
     @mock.patch('sys.stderr', new_callable=StringIO)
     def test_completeness_flag_without_validate(self, mock_stderr):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         testargs = ["bagit.py", "--completeness-only", self.tmpdir]
 
         with self.assertRaises(SystemExit) as cm:
@@ -1193,7 +1196,7 @@ class TestCLI(SelfCleaningTestCase):
         )
 
     def test_invalid_completeness_validate(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         old_path = j(self.tmpdir, "data", "README")
         new_path = j(self.tmpdir, "data", "extra_file")
         os.rename(old_path, new_path)
@@ -1212,7 +1215,7 @@ class TestCLI(SelfCleaningTestCase):
         )
 
     def test_valid_completeness_validate(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         testargs = ["bagit.py", "--validate", "--completeness-only", self.tmpdir]
 
         with self.assertLogs() as captured:
@@ -1227,7 +1230,7 @@ class TestCLI(SelfCleaningTestCase):
         )
 
     def test_invalid_full_validate(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         readme = j(self.tmpdir, "data", "README")
         txt = slurp_text_file(readme)
         txt = "A" + txt[1:]
@@ -1245,7 +1248,7 @@ class TestCLI(SelfCleaningTestCase):
         self.assertIn("Bag validation failed", captured.records[-1].getMessage())
 
     def test_valid_full_validate(self):
-        bag = bagit.make_bag(self.tmpdir)
+        bag = bagit_modules.bagging.make_bag(self.tmpdir)
         testargs = ["bagit.py", "--validate", self.tmpdir]
 
         with self.assertLogs() as captured:
