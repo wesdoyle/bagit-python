@@ -7,14 +7,18 @@ from bagit_modules.string_ops import force_unicode
 
 def make_tag_file(bag_info_path, bag_info):
     headers = sorted(bag_info.keys())
+    output_lines = []
+
+    for h in headers:
+        values = bag_info[h]
+        if not isinstance(values, list):
+            values = [values]
+        for txt in values:
+            sanitized_txt = force_unicode(txt).replace("\n", "").replace("\r", "")
+            output_lines.append(f"{h}: {sanitized_txt}")
+
     with open_text_file(bag_info_path, "w") as f:
-        for h in headers:
-            values = bag_info[h]
-            if not isinstance(values, list):
-                values = [values]
-            for txt in values:
-                txt = force_unicode(txt).replace("\n", "").replace("\r", "")
-                f.write("%s: %s\n" % (h, txt))
+        f.write("\n".join(output_lines))
 
 
 def load_tag_file(tag_file_name, encoding="utf-8-sig"):
@@ -26,32 +30,33 @@ def load_tag_file(tag_file_name, encoding="utf-8-sig"):
 
 
 def _parse_tags(tag_file):
-    """Parses a tag file, according to RFC 2822.  This
-       includes line folding, permitting extra-long
-       field values.
-
-       See http://www.faqs.org/rfcs/rfc2822.html for
-       more information.
-    """
+    """Parses a tag file, according to RFC 2822. This includes line folding, permitting extra-long field values."""
     tag_name = None
     tag_value = None
+    filename = os.path.basename(tag_file.name)
 
-    for num, line in enumerate(tag_file):
-        if not line.strip():
+    for line in tag_file:
+        stripped_line = line.strip()
+
+        if not stripped_line:
             continue
-        elif line[0].isspace() and tag_value is not None:  # folded line
-            tag_value += line
-        else:
-            # Starting a new tag; yield the last one.
-            if tag_name:
-                yield tag_name, tag_value.strip()
-            if ":" not in line:
-                raise BagValidationError(
-                    _("%(filename)s contains invalid tag: %(line)s")
-                    % {"line": line.strip(), "filename": os.path.basename(tag_file.name)}
-                )
-            tag_name, tag_value = line.strip().split(":", 1)
 
-    # Passed the EOF.  All done after this.
+        # Check for folded line
+        if line[0].isspace() and tag_value is not None:
+            tag_value += stripped_line
+            continue
+
+        # Yield the last tag before starting a new one
+        if tag_name:
+            yield tag_name, tag_value
+
+        # Check for invalid tags
+        if ":" not in stripped_line:
+            raise BagValidationError(
+                _("%(filename)s contains invalid tag: %(line)s") % {"line": stripped_line, "filename": filename})
+
+        tag_name, tag_value = stripped_line.split(":", 1)
+
+    # Yield any remaining tag after the loop
     if tag_name:
-        yield tag_name, tag_value.strip()
+        yield tag_name, tag_value
