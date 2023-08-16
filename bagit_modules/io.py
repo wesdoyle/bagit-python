@@ -4,17 +4,12 @@ from os.path import join
 
 
 def walk(data_dir):
-    for dirpath, dirnames, filenames in os.walk(data_dir):
-        # if we don't sort here the order of entries is non-deterministic
-        # which makes it hard to test the fixity of tagmanifest-md5.txt
+    for dir_path, dir_names, filenames in os.walk(data_dir):
+        # Sort for deterministic order, facilitating fixity testing
         filenames.sort()
-        dirnames.sort()
+        dir_names.sort()
         for fn in filenames:
-            path = os.path.join(dirpath, fn)
-            # BagIt spec requires manifest to always use '/' as path separator
-            if os.path.sep != "/":
-                parts = path.split(os.path.sep)
-                path = "/".join(parts)
+            path = os.path.normpath(os.path.join(dir_path, fn)).replace(os.path.sep, '/')
             yield path
 
 
