@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function, unicode_literals
-
 import logging
 
 from bagit import MODULE_NAME

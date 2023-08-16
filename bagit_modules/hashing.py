@@ -9,17 +9,17 @@ from bagit_modules.logging import LOGGER
 
 
 def calc_hashes(args):
-    # auto unpacking of sequences illegal in Python3
-    (base_path, rel_path, hashes, algorithms) = args
+    base_path, rel_path, hashes, algorithms = args
     full_path = os.path.join(base_path, rel_path)
 
-    # Create a clone of the default empty hash objects:
-    f_hashers = dict((alg, hashlib.new(alg)) for alg in hashes if alg in algorithms)
+    # Create a clone of the default empty hash objects using set operations:
+    valid_algorithms = set(hashes).intersection(algorithms)
+    f_hashers = {alg: hashlib.new(alg) for alg in valid_algorithms}
 
     try:
         f_hashes = _calculate_file_hashes(full_path, f_hashers)
     except BagValidationError as e:
-        f_hashes = dict((alg, force_unicode(e)) for alg in f_hashers.keys())
+        f_hashes = {alg: force_unicode(e) for alg in f_hashers}
 
     return rel_path, f_hashes, hashes
 
