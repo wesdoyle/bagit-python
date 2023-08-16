@@ -2,7 +2,6 @@ import os
 import warnings
 from datetime import date
 
-from bagit import VERSION
 from bagit_modules.translation_catalog import _
 from bagit_modules.bag import Bag
 from bagit_modules.constants import PROJECT_URL, DEFAULT_CHECKSUMS
@@ -11,6 +10,7 @@ from bagit_modules.io import open_text_file
 from bagit_modules.logging import LOGGER
 from bagit_modules.manifests import make_manifests, make_tagmanifest_file
 from bagit_modules.tagging import make_tag_file
+from bagit_modules.versioning import get_version
 
 
 def make_bag(
@@ -92,7 +92,7 @@ def make_bag(
             bag_info["Bagging-Date"] = date.strftime(date.today(), "%Y-%m-%d")
         if "Bag-Software-Agent" not in bag_info:
             bag_info["Bag-Software-Agent"] = "bagit.py v%s <%s>" % (
-                VERSION,
+                get_version(),
                 PROJECT_URL,
             )
 

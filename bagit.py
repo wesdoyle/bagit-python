@@ -5,16 +5,16 @@ import sys
 
 from bagit_modules.bag import Bag
 from bagit_modules.bagging import make_bag
+from bagit_modules.docs import read_global_docs
 from bagit_modules.errors import BagError
 from bagit_modules.logging import LOGGER, configure_logging
 from bagit_modules.parsing import make_parser
 from bagit_modules.translation_catalog import _
 from bagit_modules.versioning import get_version
 
-get_version()
+version = get_version()
 
-with open("docstring.txt", "r") as f:
-    __doc__ = f.read() % globals()
+__doc__ = read_global_docs()
 
 
 def main():
@@ -26,7 +26,7 @@ def main():
 
     # Version check
     if "--version" in sys.argv:
-        print(_("bagit-python version %s") % VERSION)
+        print(_("bagit-python version %s") % version)
         sys.exit(0)
 
     # Argument validations

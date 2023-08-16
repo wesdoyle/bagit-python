@@ -1,5 +1,7 @@
 from pkg_resources import get_distribution, DistributionNotFound
 
+from bagit_modules.module import MODULE_NAME
+
 
 def get_version():
     try:

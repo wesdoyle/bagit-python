@@ -1,11 +1,12 @@
 import argparse
 import re
 
-from bagit import VERSION, __doc__
-from bagit_modules.translation_catalog import _
-from bagit_modules.hashing import CHECKSUM_ALGOS
-from constants import STANDARD_BAG_INFO_HEADERS
 from bagit_modules.constants import DEFAULT_CHECKSUMS
+from bagit_modules.docs import read_global_docs
+from bagit_modules.hashing import CHECKSUM_ALGOS
+from bagit_modules.translation_catalog import _
+from bagit_modules.versioning import get_version
+from bagit_modules.constants import STANDARD_BAG_INFO_HEADERS
 
 
 class BagArgumentParser(argparse.ArgumentParser):
@@ -24,7 +25,7 @@ class BagHeaderAction(argparse.Action):
 def make_parser():
     parser = BagArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description="bagit-python version %s\n\n%s\n" % (VERSION, __doc__.strip()),
+        description="bagit-python version %s\n\n%s\n" % (get_version(), read_global_docs().strip()),
     )
     parser.add_argument(
         "--processes",
