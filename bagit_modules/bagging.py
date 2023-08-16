@@ -33,108 +33,75 @@ def make_bag(
         checksums = DEFAULT_CHECKSUMS
 
     bag_dir = os.path.abspath(bag_dir)
-    cwd = os.path.abspath(os.path.curdir)
-
-    if cwd.startswith(bag_dir) and cwd != bag_dir:
-        raise RuntimeError(
-            _("Bagging a parent of the current directory is not supported")
-        )
-
-    LOGGER.info(_("Creating bag for directory %s"), bag_dir)
 
     if not os.path.isdir(bag_dir):
         LOGGER.error(_("Bag directory %s does not exist"), bag_dir)
         raise RuntimeError(_("Bag directory %s does not exist") % bag_dir)
 
-    # FIXME: we should do the permissions checks before changing directories
-    old_dir = os.path.abspath(os.path.curdir)
+    if os.path.abspath(os.getcwd()).startswith(bag_dir):
+        raise RuntimeError(_("Bagging a parent of the current directory is not supported"))
+
+    LOGGER.info(_("Creating bag for directory %s"), bag_dir)
+
+    permissions = _check_directory_permissions(bag_dir)
+
+    if permissions["unreadable_dirs"] or permissions["unreadable_files"]:
+        LOGGER.error(_("The following directories and files do not have read permissions:"))
+        for path in permissions["unreadable_dirs"] + permissions["unreadable_files"]:
+            LOGGER.error(path)
+        raise BagError(_("Read permissions are required to calculate file fixities"))
+
+    if permissions["unwritable_dirs"] or permissions["unwritable_files"]:
+        LOGGER.error(_("The following directories and files do not have write permissions:"))
+        for path in permissions["unwritable_dirs"] + permissions["unwritable_files"]:
+            LOGGER.error(path)
+        raise BagError(_("Write permissions are required to move all files and directories"))
+
+    if not os.path.isdir(bag_dir):
+        LOGGER.error(_("Bag directory %s does not exist"), bag_dir)
+        raise RuntimeError(_("Bag directory %s does not exist") % bag_dir)
+
+    old_dir = os.path.abspath(os.getcwd())
 
     try:
-        # TODO: These two checks are currently redundant since an unreadable directory will also
-        #       often be unwritable, and this code will require review when we add the option to
-        #       bag to a destination other than the source. It would be nice if we could avoid
-        #       walking the directory tree more than once even if most filesystems will cache it
+        # Create data directory and move existing items into it
+        data_dir = os.path.join(bag_dir, "data")
+        if not os.path.exists(data_dir):
+            os.mkdir(data_dir)
 
-        unbaggable = can_bag(bag_dir)
+        for item in os.listdir(bag_dir):
+            item_path = os.path.join(bag_dir, item)
+            if item_path != data_dir:
+                os.rename(item_path, os.path.join(data_dir, item))
 
-        if unbaggable:
-            LOGGER.error(
-                _("Unable to write to the following directories and files:\n%s"),
-                unbaggable,
-            )
-            raise BagError(_("Missing permissions to move all files and directories"))
+        total_bytes, total_files = make_manifests(
+            "data", processes, algorithms=checksums, encoding=encoding
+        )
 
-        unreadable_dirs, unreadable_files = can_read(bag_dir)
+        LOGGER.info(_("Creating bagit.txt"))
+        txt = """BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n"""
+        with open_text_file("bagit.txt", "w") as bagit_file:
+            bagit_file.write(txt)
 
-        if unreadable_dirs or unreadable_files:
-            if unreadable_dirs:
-                LOGGER.error(
-                    _("The following directories do not have read permissions:\n%s"),
-                    unreadable_dirs,
-                )
-            if unreadable_files:
-                LOGGER.error(
-                    _("The following files do not have read permissions:\n%s"),
-                    unreadable_files,
-                )
-            raise BagError(
-                _("Read permissions are required to calculate file fixities")
-            )
-        else:
-            LOGGER.info(_("Creating data directory"))
+        LOGGER.info(_("Creating bag-info.txt"))
+        if bag_info is None:
+            bag_info = {}
 
-            # FIXME: if we calculate full paths we won't need to deal with changing directories
-            os.chdir(bag_dir)
-            cwd = os.getcwd()
-            temp_data = tempfile.mkdtemp(dir=cwd)
-
-            for f in os.listdir("."):
-                if os.path.abspath(f) == temp_data:
-                    continue
-                new_f = os.path.join(temp_data, f)
-                LOGGER.info(
-                    _("Moving %(source)s to %(destination)s"),
-                    {"source": f, "destination": new_f},
-                )
-                os.rename(f, new_f)
-
-            LOGGER.info(
-                _("Moving %(source)s to %(destination)s"),
-                {"source": temp_data, "destination": "data"},
-            )
-            os.rename(temp_data, "data")
-
-            # permissions for the payload directory should match those of the
-            # original directory
-            os.chmod("data", os.stat(cwd).st_mode)
-
-            total_bytes, total_files = make_manifests(
-                "data", processes, algorithms=checksums, encoding=encoding
+        # Allow 'Bagging-Date' and 'Bag-Software-Agent' to be overridden
+        if "Bagging-Date" not in bag_info:
+            bag_info["Bagging-Date"] = date.strftime(date.today(), "%Y-%m-%d")
+        if "Bag-Software-Agent" not in bag_info:
+            bag_info["Bag-Software-Agent"] = "bagit.py v%s <%s>" % (
+                VERSION,
+                PROJECT_URL,
             )
 
-            LOGGER.info(_("Creating bagit.txt"))
-            txt = """BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n"""
-            with open_text_file("bagit.txt", "w") as bagit_file:
-                bagit_file.write(txt)
+        bag_info["Payload-Oxum"] = "%s.%s" % (total_bytes, total_files)
+        make_tag_file("bag-info.txt", bag_info)
 
-            LOGGER.info(_("Creating bag-info.txt"))
-            if bag_info is None:
-                bag_info = {}
+        for c in checksums:
+            make_tagmanifest_file(c, bag_dir, encoding="utf-8")
 
-            # allow 'Bagging-Date' and 'Bag-Software-Agent' to be overidden
-            if "Bagging-Date" not in bag_info:
-                bag_info["Bagging-Date"] = date.strftime(date.today(), "%Y-%m-%d")
-            if "Bag-Software-Agent" not in bag_info:
-                bag_info["Bag-Software-Agent"] = "bagit.py v%s <%s>" % (
-                    VERSION,
-                    PROJECT_URL,
-                )
-
-            bag_info["Payload-Oxum"] = "%s.%s" % (total_bytes, total_files)
-            make_tag_file("bag-info.txt", bag_info)
-
-            for c in checksums:
-                make_tagmanifest_file(c, bag_dir, encoding="utf-8")
     except Exception:
         LOGGER.exception(_("An error occurred creating a bag in %s"), bag_dir)
         raise
@@ -142,3 +109,34 @@ def make_bag(
         os.chdir(old_dir)
 
     return Bag(bag_dir)
+
+
+def _check_directory_permissions(directory):
+    unreadable_dirs = []
+    unwritable_dirs = []
+    unreadable_files = []
+    unwritable_files = []
+
+    for dir_path, dir_names, filenames in os.walk(directory):
+        # Check directories
+        for dn in dir_names:
+            full_path = os.path.join(dir_path, dn)
+            if not os.access(full_path, os.R_OK):
+                unreadable_dirs.append(full_path)
+            if not os.access(full_path, os.W_OK):
+                unwritable_dirs.append(full_path)
+
+        # Check files
+        for fn in filenames:
+            full_path = os.path.join(dir_path, fn)
+            if not os.access(full_path, os.R_OK):
+                unreadable_files.append(full_path)
+            if not os.access(full_path, os.W_OK):
+                unwritable_files.append(full_path)
+
+    return {
+        "unreadable_dirs": unreadable_dirs,
+        "unwritable_dirs": unwritable_dirs,
+        "unreadable_files": unreadable_files,
+        "unwritable_files": unwritable_files,
+    }
