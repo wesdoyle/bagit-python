@@ -1,9 +1,8 @@
 import os
-import re
 
 from bagit import _, open_text_file
-from bagit_modules.string_ops import force_unicode
 from bagit_modules.errors import BagValidationError
+from bagit_modules.string_ops import force_unicode
 
 
 def make_tag_file(bag_info_path, bag_info):

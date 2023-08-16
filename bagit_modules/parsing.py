@@ -1,9 +1,8 @@
-from __future__ import division, absolute_import, print_function, unicode_literals
-
 import argparse
 import re
 
-from bagit import VERSION, __doc__, _, CHECKSUM_ALGOS, STANDARD_BAG_INFO_HEADERS
+from bagit import VERSION, __doc__, _, CHECKSUM_ALGOS
+from constants import STANDARD_BAG_INFO_HEADERS
 from bagit_modules.constants import DEFAULT_CHECKSUMS
 
 
@@ -89,7 +88,7 @@ def make_parser():
     metadata_args = parser.add_argument_group(_("Optional Bag Metadata"))
     for header in STANDARD_BAG_INFO_HEADERS:
         metadata_args.add_argument(
-            "--%s" % header.lower(), type=str, action=BagHeaderAction, default=argparse.SUPPRESS
+            f"--{header.lower()}", type=str, action=BagHeaderAction, default=argparse.SUPPRESS
         )
 
     parser.add_argument(

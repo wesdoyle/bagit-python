@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function, unicode_literals
-
 from bagit import _
 from bagit_modules.string_ops import force_unicode
 

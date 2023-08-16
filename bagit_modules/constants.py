@@ -1,7 +1,5 @@
-from __future__ import division, absolute_import, print_function, unicode_literals
-
 PROJECT_URL = "https://github.com/LibraryOfCongress/bagit-python"
-STANDaARD_BAG_INFO_HEADERS = [
+STANDARD_BAG_INFO_HEADERS = [
     "Source-Organization",
     "Organization-Address",
     "Contact-Name",
