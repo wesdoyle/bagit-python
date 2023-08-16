@@ -33,17 +33,15 @@ def can_bag(test_dir):
 
 
 def find_tag_files(bag_dir):
-    for dir in os.listdir(bag_dir):
-        if dir != "data":
-            if os.path.isfile(dir) and not dir.startswith("tagmanifest-"):
-                yield dir
-            for dir_name, _, filenames in os.walk(dir):
+    for item in os.listdir(bag_dir):
+        full_path = os.path.join(bag_dir, item)
+        if item != "data" and os.path.isfile(full_path) and not item.startswith("tagmanifest-"):
+            yield item
+        elif os.path.isdir(full_path):
+            for dir_name, _, filenames in os.walk(full_path):
                 for filename in filenames:
-                    if filename.startswith("tagmanifest-"):
-                        continue
-                    # remove everything up to the bag_dir directory
-                    p = join(dir_name, filename)
-                    yield os.path.relpath(p, bag_dir)
+                    if not filename.startswith("tagmanifest-"):
+                        yield os.path.relpath(os.path.join(dir_name, filename), bag_dir)
 
 
 def can_read(test_dir):
