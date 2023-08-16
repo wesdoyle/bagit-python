@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function, unicode_literals
-
 import hashlib
 import os
 
@@ -10,7 +8,7 @@ from bagit_modules.errors import BagValidationError
 from bagit_modules.logging import LOGGER
 
 
-def _calc_hashes(args):
+def calc_hashes(args):
     # auto unpacking of sequences illegal in Python3
     (base_path, rel_path, hashes, algorithms) = args
     full_path = os.path.join(base_path, rel_path)
@@ -24,30 +22,6 @@ def _calc_hashes(args):
         f_hashes = dict((alg, force_unicode(e)) for alg in f_hashers.keys())
 
     return rel_path, f_hashes, hashes
-
-
-def _calculate_file_hashes(full_path, f_hashers):
-    """
-    Returns a dictionary of (algorithm, hexdigest) values for the provided
-    filename
-    """
-    LOGGER.info(_("Verifying checksum for file %s"), full_path)
-
-    try:
-        with open(full_path, "rb") as f:
-            while True:
-                block = f.read(HASH_BLOCK_SIZE)
-                if not block:
-                    break
-                for i in f_hashers.values():
-                    i.update(block)
-    except (OSError, IOError) as e:
-        raise BagValidationError(
-            _("Could not read %(filename)s: %(error)s")
-            % {"filename": full_path, "error": force_unicode(e)}
-        )
-
-    return dict((alg, h.hexdigest()) for alg, h in f_hashers.items())
 
 
 def get_hashers(algorithms):
@@ -85,3 +59,26 @@ def get_hashers(algorithms):
         )
 
     return hashers
+
+
+def _calculate_file_hashes(full_path, f_hashers):
+    """
+    Returns a dictionary of (algorithm, hexdigest) values for the provided
+    filename
+    """
+    LOGGER.info(_("Verifying checksum for file %s"), full_path)
+
+    hashers = list(f_hashers.values())  # Get hashers once before the loop
+
+    try:
+        with open(full_path, "rb") as f:
+            for block in iter(lambda: f.read(HASH_BLOCK_SIZE), b''):
+                for hasher in hashers:
+                    hasher.update(block)
+    except (OSError, IOError) as e:
+        raise BagValidationError(
+            _("Could not read %(filename)s: %(error)s")
+            % {"filename": full_path, "error": force_unicode(e)}
+        )
+
+    return {alg: hasher.hexdigest() for alg, hasher in f_hashers.items()}

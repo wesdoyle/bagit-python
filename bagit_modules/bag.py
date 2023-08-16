@@ -11,7 +11,7 @@ from bagit import _, CHECKSUM_ALGOS, open_text_file
 from bagit_modules.constants import UNICODE_BYTE_ORDER_MARK
 from bagit_modules.concurrency import posix_multiprocessing_worker_initializer
 from bagit_modules.string_ops import force_unicode, normalize_unicode
-from bagit_modules.hashing import _calc_hashes
+from bagit_modules.hashing import calc_hashes
 from bagit_modules.tagging import make_tag_file, load_tag_file
 from bagit_modules.filenames import decode_filename
 from bagit_modules.manifests import make_manifests, make_tagmanifest_file
@@ -626,13 +626,13 @@ class Bag(object):
 
         try:
             if processes == 1:
-                hash_results = [_calc_hashes(i) for i in args]
+                hash_results = [calc_hashes(i) for i in args]
             else:
                 try:
                     pool = multiprocessing.Pool(
                         processes if processes else None, initializer=worker_init
                     )
-                    hash_results = pool.map(_calc_hashes, args)
+                    hash_results = pool.map(calc_hashes, args)
                 finally:
                     pool.terminate()
 
