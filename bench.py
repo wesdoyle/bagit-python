@@ -2,7 +2,7 @@
 
 """
 This is a little benchmarking script to exercise bagit.make_bag and
-bagit.validate using 1-8 parallel processes. It will download some images 
+bagit.validate using 1-8 parallel processes. It will download some images
 from NASA for use in bagging the first time it is run.
 """
 
@@ -12,6 +12,7 @@ import shutil
 import timeit
 
 import bagit
+import bagit_modules.bagging
 
 # fetch some images from NASA to bag up
 
@@ -56,7 +57,7 @@ for p in range(1, 9):
 # validate a bag with 1-8 processes
 
 shutil.copytree("bench-data", "bench-data-bag")
-bagit.make_bag("bench-data-bag")
+bagit_modules.bagging.make_bag("bench-data-bag")
 
 # validate bench-data using n processes
 statement = """
