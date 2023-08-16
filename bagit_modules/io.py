@@ -17,19 +17,17 @@ def can_bag(test_dir):
     """Scan the provided directory for files which cannot be bagged due to insufficient permissions"""
     unbaggable = []
 
+    # Check top-level directory permissions
     if not os.access(test_dir, os.R_OK):
         # We cannot continue without permission to read the source directory
-        unbaggable.append(test_dir)
-        return unbaggable
+        return [test_dir]
 
     if not os.access(test_dir, os.W_OK):
         unbaggable.append(test_dir)
 
-    for dirpath, dirnames, filenames in os.walk(test_dir):
-        for directory in dirnames:
-            full_path = os.path.join(dirpath, directory)
-            if not os.access(full_path, os.W_OK):
-                unbaggable.append(full_path)
+    for dir_path, dir_names, _ in os.walk(test_dir):
+        unbaggable.extend(os.path.join(dir_path, directory) for directory in dir_names if
+                          not os.access(os.path.join(dir_path, directory), os.W_OK))
 
     return unbaggable
 
