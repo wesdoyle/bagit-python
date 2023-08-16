@@ -16,19 +16,8 @@ from bagit_modules.io import find_locale_dir
 from bagit_modules.logging import LOGGER, configure_logging
 from bagit_modules.parsing import make_parser
 
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
-
-TRANSLATION_CATALOG = gettext.translation(
-    "bagit-python", localedir=find_locale_dir(), fallback=True
-)
-if sys.version_info < (3,):
-    _ = TRANSLATION_CATALOG.ugettext
-else:
-    _ = TRANSLATION_CATALOG.gettext
-
+TRANSLATION_CATALOG = gettext.translation("bagit-python", localedir=find_locale_dir(), fallback=True)
+_ = TRANSLATION_CATALOG.gettext
 MODULE_NAME = "bagit" if __name__ == "__main__" else __name__
 
 try:
@@ -39,23 +28,12 @@ except DistributionNotFound:
 with open("docstring.txt", "r") as f:
     __doc__ = f.read() % globals()
 
-# standard bag-info.txt metadata
-
-try:
-    CHECKSUM_ALGOS = hashlib.algorithms_guaranteed
-except AttributeError:
-    # FIXME: remove when we drop Python 2 (https://github.com/LibraryOfCongress/bagit-python/issues/102)
-    # Python 2.7.0-2.7.8
-    CHECKSUM_ALGOS = set(hashlib.algorithms)
-
-#: Block size used when reading files for hashing:
+CHECKSUM_ALGOS = hashlib.algorithms_guaranteed
 
 #: Convenience function used everywhere we want to open a file to read text
 #: rather than un-decoded bytes:
 open_text_file = partial(codecs.open, encoding="utf-8", errors="strict")
 
-
-# This is the same as decoding the byte values in codecs.BOM:
 
 def main():
     if "--version" in sys.argv:
