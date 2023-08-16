@@ -20,20 +20,10 @@ def make_tag_file(bag_info_path, bag_info):
 
 def load_tag_file(tag_file_name, encoding="utf-8-sig"):
     with open_text_file(tag_file_name, "r", encoding=encoding) as tag_file:
-        # Store duplicate tags as list of vals
-        # in order of parsing under the same key.
         tags = {}
         for name, value in _parse_tags(tag_file):
-            if name not in tags:
-                tags[name] = value
-                continue
-
-            if not isinstance(tags[name], list):
-                tags[name] = [tags[name], value]
-            else:
-                tags[name].append(value)
-
-        return tags
+            tags.setdefault(name, []).append(value)
+        return {k: v[0] if len(v) == 1 else v for k, v in tags.items()}
 
 
 def _parse_tags(tag_file):
