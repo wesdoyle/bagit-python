@@ -81,7 +81,8 @@ def make_bag(
 
         LOGGER.info(_("Creating bagit.txt"))
         txt = """BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n"""
-        with open_text_file("bagit.txt", "w") as bagit_file:
+        bagit_file_path = os.path.join(bag_dir, "bagit.txt")
+        with open_text_file(bagit_file_path, "w") as bagit_file:
             bagit_file.write(txt)
 
         LOGGER.info(_("Creating bag-info.txt"))
@@ -98,7 +99,8 @@ def make_bag(
             )
 
         bag_info["Payload-Oxum"] = "%s.%s" % (total_bytes, total_files)
-        make_tag_file("bag-info.txt", bag_info)
+        bag_info_file_path = os.path.join(bag_dir, "bag-info.txt")
+        make_tag_file(bag_info_file_path, bag_info)
 
         for c in checksums:
             make_tagmanifest_file(c, bag_dir, encoding="utf-8")
