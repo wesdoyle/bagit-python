@@ -152,7 +152,7 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
     def test_validate_missing_directory(self):
         bagit_modules.bagging.make_bag(self.tmpdir)
 
-        tmp_data_dir = os.path.join(self.tmpdir, "data")
+        tmp_data_dir = os.path.join(os.path.dirname(self.tempdir), 'data')
         shutil.rmtree(tmp_data_dir)
 
         bag = bagit_modules.bag.Bag(self.tmpdir)
@@ -165,12 +165,17 @@ class TestSingleProcessValidation(SelfCleaningTestCase):
         )
 
     def test_validation_error_details(self):
-        bag = bagit_modules.bagging.make_bag(
-            self.tmpdir, checksums=["md5"], bag_info={"Bagging-Date": "1970-01-01"}
+        bagit_modules.bagging.make_bag(
+            self.tmpdir,
+            checksums=["md5"],
+            bag_info={"Bagging-Date": "1970-01-01"}
         )
-        readme = j(self.tmpdir, "data", "README")
+
+        readme = (self.tmpdir, "data", "README")
+
         txt = slurp_text_file(readme)
         txt = "A" + txt[1:]
+
         with open(readme, "w") as r:
             r.write(txt)
 

@@ -15,7 +15,12 @@ from bagit_modules.versioning import get_version
 
 
 def make_bag(
-    bag_dir, bag_info=None, processes=1, checksums=None, checksum=None, encoding="utf-8"
+    bag_dir,
+    bag_info=None,
+    processes=1,
+    checksums=None,
+    checksum=None,
+    encoding="utf-8"
 ):
     """
     Convert a given directory into a bag. You can pass in arbitrary
@@ -23,46 +28,10 @@ def make_bag(
     the bag_info dictionary.
     """
 
-    if checksum is not None:
-        warnings.warn(
-            _("The `checksum` argument for `make_bag` should be replaced with `checksums`"),
-            DeprecationWarning,
-        )
-        checksums = checksum
-
-    if checksums is None:
-        checksums = DEFAULT_CHECKSUMS
-
+    checksums = _set_checksums(checksum, checksums)
     bag_dir = os.path.abspath(bag_dir)
-
-    if not os.path.isdir(bag_dir):
-        LOGGER.error(_("Bag directory %s does not exist"), bag_dir)
-        raise RuntimeError(_("Bag directory %s does not exist") % bag_dir)
-
-    if os.path.abspath(os.getcwd()).startswith(bag_dir):
-        raise RuntimeError(_("Bagging a parent of the current directory is not supported"))
-
     LOGGER.info(_("Creating bag for directory %s"), bag_dir)
-
-    permissions = _check_directory_permissions(bag_dir)
-
-    if permissions["unreadable_dirs"] or permissions["unreadable_files"]:
-        LOGGER.error(_("The following directories and files do not have read permissions:"))
-        for path in permissions["unreadable_dirs"] + permissions["unreadable_files"]:
-            LOGGER.error(path)
-        raise BagError(_("Read permissions are required to calculate file fixities"))
-
-    if permissions["unwritable_dirs"] or permissions["unwritable_files"]:
-        LOGGER.error(_("The following directories and files do not have write permissions:"))
-        for path in permissions["unwritable_dirs"] + permissions["unwritable_files"]:
-            LOGGER.error(path)
-        raise BagError(_("Write permissions are required to move all files and directories"))
-
-    if not os.path.isdir(bag_dir):
-        LOGGER.error(_("Bag directory %s does not exist"), bag_dir)
-        raise RuntimeError(_("Bag directory %s does not exist") % bag_dir)
-
-    old_dir = os.path.abspath(os.getcwd())
+    _validate_bag_dir(bag_dir)
 
     try:
         # Create data directory and move existing items into it
@@ -76,7 +45,10 @@ def make_bag(
                 os.rename(item_path, os.path.join(data_dir, item))
 
         total_bytes, total_files = make_manifests(
-            "data", processes, algorithms=checksums, encoding=encoding
+            data_dir,
+            processes,
+            algorithms=checksums,
+            encoding=encoding
         )
 
         LOGGER.info(_("Creating bagit.txt"))
@@ -108,10 +80,46 @@ def make_bag(
     except Exception:
         LOGGER.exception(_("An error occurred creating a bag in %s"), bag_dir)
         raise
-    finally:
-        os.chdir(old_dir)
 
     return Bag(bag_dir)
+
+
+def _validate_bag_dir(bag_dir):
+    if not os.path.isdir(bag_dir):
+        LOGGER.error(_("Bag directory %s does not exist"), bag_dir)
+        raise RuntimeError(_("Bag directory %s does not exist") % bag_dir)
+    if os.path.abspath(os.getcwd()).startswith(bag_dir):
+        raise RuntimeError(_("Bagging a parent of the current directory is not supported"))
+    _inspect_directory_permissions(bag_dir)
+    if not os.path.isdir(bag_dir):
+        LOGGER.error(_("Bag directory %s does not exist"), bag_dir)
+        raise RuntimeError(_("Bag directory %s does not exist") % bag_dir)
+
+
+def _set_checksums(checksum, checksums):
+    if checksum is not None:
+        warnings.warn(
+            _("The `checksum` argument for `make_bag` should be replaced with `checksums`"),
+            DeprecationWarning,
+        )
+        checksums = checksum
+    if checksums is None:
+        checksums = DEFAULT_CHECKSUMS
+    return checksums
+
+
+def _inspect_directory_permissions(bag_dir):
+    permissions = _check_directory_permissions(bag_dir)
+    if permissions["unreadable_dirs"] or permissions["unreadable_files"]:
+        LOGGER.error(_("The following directories and files do not have read permissions:"))
+        for path in permissions["unreadable_dirs"] + permissions["unreadable_files"]:
+            LOGGER.error(path)
+        raise BagError(_("Read permissions are required to calculate file fixities"))
+    if permissions["unwritable_dirs"] or permissions["unwritable_files"]:
+        LOGGER.error(_("The following directories and files do not have write permissions:"))
+        for path in permissions["unwritable_dirs"] + permissions["unwritable_files"]:
+            LOGGER.error(path)
+        raise BagError(_("Write permissions are required to move all files and directories"))
 
 
 def _check_directory_permissions(directory):

@@ -175,16 +175,16 @@ class Bag(object):
 
     def payload_files(self):
         """Returns a list of filenames which are present on the local filesystem"""
-        payload_dir = os.path.join(self.path, "data")
+        payload_dir = os.path.join(os.path.dirname(os.path.abspath(self.path)), 'data')
 
-        for dirpath, _, filenames in os.walk(payload_dir):
+        for dir_path, _, filenames in os.walk(payload_dir):
             for f in filenames:
                 # Jump through some hoops here to make the payload files are
                 # returned with the directory structure relative to the base
                 # directory rather than the
                 normalized_f = os.path.normpath(f)
                 rel_path = os.path.relpath(
-                    os.path.join(dirpath, normalized_f), start=self.path
+                    os.path.join(dir_path, normalized_f), start=self.path
                 )
 
                 self.normalized_filesystem_names[normalize_unicode(rel_path)] = rel_path
