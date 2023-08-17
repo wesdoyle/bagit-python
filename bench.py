@@ -19,7 +19,7 @@ import bagit_modules.bagging
 if not os.path.isdir("bench-data"):
     print("fetching some images to bag up from nasa")
     os.mkdir("bench-data")
-    ftp = ftplib.FTP("nssdcftp.gsfc.nasa.gov")
+    ftp = ftplib.FTP_TLS("nssdcftp.gsfc.nasa.gov")
     ftp.login()
 
     ftp.cwd("/pub/misc/photo_gallery/hi-res/planetary/mars/")
